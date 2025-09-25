@@ -33,8 +33,8 @@ public interface ArvoreBinariaPesquisa {
     // Outras operações de arvore binaria
     public No filhoEsquerdo (No n);
     public No filhoDireito (No n);
-    public No ehFilhoEsquerdo (No n);
-    public No ehFilhoDireito (No n);
+    public boolean temFilhoEsquerdo (No n);
+    public boolean temFilhoDireito (No n);
     
     // Operações de busca
     public No buscar (No n, Object o);
