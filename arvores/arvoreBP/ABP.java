@@ -251,20 +251,37 @@ public class ABP implements ArvoreBinariaPesquisa {
         }
     }
 
-// Método adicional para imprimir a árvore (para fins de depuração)
-    public void printArvore() {
-        printArvore(raiz(), 0);
+// Método adicional para imprimir a árvore de cima para baixo (nível por nível)
+public void printArvore() {
+    if (root == null) {
+        System.out.println("(árvore vazia)");
+        return;
     }
-    
-    private void printArvore(No n, int depth) {
-        if (n == null) {
-            return;
+    ArrayList<No> nivelAtual = new ArrayList<>();
+    nivelAtual.add(root);
+
+    while (!nivelAtual.isEmpty()) {
+        ArrayList<No> proximoNivel = new ArrayList<>();
+        for (No n : nivelAtual) {
+            if (n != null) {
+                System.out.print(n.getValor() + " ");
+                proximoNivel.add(n.getFilhoEsquerdo());
+                proximoNivel.add(n.getFilhoDireito());
+            } else {
+                System.out.print("  ");
+            }
         }
-        for (int i = 0; i < depth; i++) {
-            System.out.print("  ");
+        System.out.println();
+        // Verifica se o próximo nível tem pelo menos um nó não nulo
+        boolean temNo = false;
+        for (No no : proximoNivel) {
+            if (no != null) {
+                temNo = true;
+                break;
+            }
         }
-        System.out.println(n.getValor());
-        printArvore(n.getFilhoEsquerdo(), depth + 1);
-        printArvore(n.getFilhoDireito(), depth + 1);
+        if (!temNo) break;
+        nivelAtual = proximoNivel;
     }
+}
 }
