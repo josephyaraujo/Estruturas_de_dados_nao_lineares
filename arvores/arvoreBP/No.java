@@ -29,7 +29,7 @@ public class No {
         return pai; 
     }
 
-    public void serFilhoEsquerdo (No n){
+    public void setFilhoEsquerdo (No n){
         filhoEsquerdo = n; 
     }
     

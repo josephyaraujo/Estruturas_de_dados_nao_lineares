@@ -114,27 +114,99 @@ public class ABP implements ArvoreBinariaPesquisa {
 
     @Override
     public void inserir(Object o) {
-
+        No parent = buscar(raiz(), o);
+        No newNode = new No(parent, o);
+        
+        if ((int) o < (int) parent.getValor()){ 
+            parent.setFilhoEsquerdo(newNode);
+            newNode.setPai(parent);
+        } else {
+            parent.setFilhoDireito(newNode);
+            newNode.setPai(parent);
+        }
+        size++;
     }
 
     @Override
     public Object remover(Object o) {
-        return null;
+        No nodeToRemove = buscar(raiz(), o);
+
+        // Caso 0: Nó não encontrado
+        if (nodeToRemove == null) {
+            throw new RuntimeException("Nó não encontrado na árvore.");
+        }
+        // Caso 1: Nó é uma folha (sem filhos)
+        if (ehExterno(nodeToRemove)){
+            if (ehRaiz(nodeToRemove)){
+                root = null; // Árvore fica vazia    
+            } else {
+                No parent = nodeToRemove.getPai();
+                if (parent != null) {
+                    if (parent.getFilhoEsquerdo() == nodeToRemove){
+                        parent.setFilhoEsquerdo(null);
+                    } else {
+                        parent.setFilhoDireito(null);
+                    }
+                }
+            }
+        }
+        // Caso 2: Nó tem um filho
+        else if (temFilhoEsquerdo(nodeToRemove) ^ temFilhoDireito(nodeToRemove)){
+            No child = temFilhoEsquerdo(nodeToRemove) ? nodeToRemove.getFilhoEsquerdo() : nodeToRemove.getFilhoDireito();
+            if (ehRaiz(nodeToRemove)){
+                root = child;
+                child.setPai(null);
+            } 
+            else {
+                No parent = nodeToRemove.getPai();
+                if (parent.getFilhoEsquerdo() == nodeToRemove){
+                    parent.setFilhoEsquerdo(child);
+                } else {
+                    parent.setFilhoDireito(child);
+                }
+                child.setPai(parent);
+            }
+        }
+        // Caso 3: Nó tem dois filhos
+        else {
+            No successor = nodeToRemove.getFilhoDireito();
+            while (temFilhoEsquerdo(successor)){
+                successor = successor.getFilhoEsquerdo();
+            }
+            Object noSubstituto = successor.getValor();
+            remover(noSubstituto); // Remove o no successor do lugar de origem
+            nodeToRemove.setValor(noSubstituto); // Substitui o valor do no a ser removido pelo valor do successor
+        }
+
+        size--;
+        return o;
     }
 
     @Override
-    public void preOrdem(No n) {
-
+    public void preOrdem(No n) { // Raiz, Esquerda, Direita
+        if (n != null){
+            System.out.print(n.getValor() + " ");
+            preOrdem(n.getFilhoEsquerdo());
+            preOrdem(n.getFilhoDireito());
+        }
     }
 
     @Override
-    public void emOrdem(No n) {
-
+    public void emOrdem(No n) { // Esquerda, Raiz, Direita
+        if (n != null){
+            emOrdem(n.getFilhoEsquerdo());
+            System.out.print(n.getValor() + " ");
+            emOrdem(n.getFilhoDireito());
+        }
     }
 
     @Override
-    public void posOrdem(No n) {
-
+    public void posOrdem(No n) { // Esquerda, Direita, Raiz
+        if (n != null){
+            posOrdem(n.getFilhoEsquerdo());
+            posOrdem(n.getFilhoDireito());
+            System.out.print(n.getValor() + " ");
+        }
     }
 
     @Override
@@ -148,7 +220,7 @@ public class ABP implements ArvoreBinariaPesquisa {
     }
 
     @Override
-    public boolean  temFilhoEsquerdo(No n) {
+    public boolean temFilhoEsquerdo(No n) {
         return filhoEsquerdo(n) != null;
     }
 
@@ -159,6 +231,40 @@ public class ABP implements ArvoreBinariaPesquisa {
 
     @Override
     public No buscar(No n, Object o) {
-        return null;
+        if (n == null){
+            return null;
+        }
+        if ((int) o < (int) n.getValor()){
+            if (n.getFilhoEsquerdo() == null){
+                return n;
+            }
+            return buscar(n.getFilhoEsquerdo(), o);
+        }
+        else if (n.getValor().equals(o)){
+            return n;
+        }
+        else {
+            if (n.getFilhoDireito() == null){
+                return n;
+            }
+            return buscar(n.getFilhoDireito(), o);            
+        }
+    }
+
+// Método adicional para imprimir a árvore (para fins de depuração)
+    public void printArvore() {
+        printArvore(raiz(), 0);
+    }
+    
+    private void printArvore(No n, int depth) {
+        if (n == null) {
+            return;
+        }
+        for (int i = 0; i < depth; i++) {
+            System.out.print("  ");
+        }
+        System.out.println(n.getValor());
+        printArvore(n.getFilhoEsquerdo(), depth + 1);
+        printArvore(n.getFilhoDireito(), depth + 1);
     }
 }
