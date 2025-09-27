@@ -75,7 +75,7 @@ public class ABP implements ArvoreBinariaPesquisa {
     }
 
     @Override
-    public Iterator filhos(No n) {
+    public Iterator<No> filhos(No n) {
         ArrayList<No> a = new ArrayList<>();
 
         if (n.getFilhoEsquerdo() != null){

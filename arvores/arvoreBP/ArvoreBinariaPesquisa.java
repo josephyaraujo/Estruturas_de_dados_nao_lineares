@@ -13,7 +13,7 @@ public interface ArvoreBinariaPesquisa {
     // Operações de acesso
     public No raiz();
     public No pai(No n);
-    public Iterator filhos (No n);
+    public Iterator<No> filhos (No n);
 
     // Operações de consulta
     public boolean ehInterno (No n);
