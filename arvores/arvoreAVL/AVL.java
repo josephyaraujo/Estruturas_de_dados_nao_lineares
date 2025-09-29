@@ -12,19 +12,27 @@ public class AVL extends ABP implements ArvoreAVL {
 
     @Override
     public void rotacao(AVLNo atual, AVLNo pai) {
-        if (atual.getFB() == 2) { // Desbalanceamento à direita
-            if (atual.getFilhoDireito() != null && ((AVLNo) atual.getFilhoDireito()).getFB() >= 0) {
-                rotacaoSimplesEsquerda(pai, atual); // Rotação simples à esquerda
-            } else {
-                rotacaoSimplesDireita(atual, (AVLNo) atual.getFilhoDireito()); // Rotação dupla à esquerda
-                rotacaoSimplesEsquerda(pai, atual);
-            }
-        } else if (atual.getFB() == -2) { // Desbalanceamento à esquerda
-            if (atual.getFilhoEsquerdo() != null && ((AVLNo) atual.getFilhoEsquerdo()).getFB() <= 0) {
-                rotacaoSimplesDireita(pai, atual); // Rotação simples à direita
-            } else {
-                rotacaoSimplesEsquerda(atual, (AVLNo) atual.getFilhoEsquerdo()); // Rotação dupla à direita
+        if (pai.getFB() == 2) { // Desbalanceamento à esquerda
+            if (atual.getFB() > 0) {
                 rotacaoSimplesDireita(pai, atual);
+            } else { //Rotação dupla à direita
+                if (atual.getFilhoDireito() != null) {
+                    rotacaoSimplesEsquerda(atual, (AVLNo) atual.getFilhoDireito());
+                }
+                if (pai.getFilhoEsquerdo() != null) {
+                    rotacaoSimplesDireita(pai, (AVLNo) pai.getFilhoEsquerdo());
+                }
+            }
+        } else if (pai.getFB() == -2) { // Desbalanceamento à direita
+            if (atual.getFB() < 0) {
+                rotacaoSimplesEsquerda(pai, atual);
+            } else { // Rotação dupla à esquerda
+                if (atual.getFilhoEsquerdo() != null) {
+                    rotacaoSimplesDireita(atual, (AVLNo) atual.getFilhoEsquerdo()); 
+                }
+                if (pai.getFilhoDireito() != null) {
+                    rotacaoSimplesEsquerda(pai, (AVLNo) pai.getFilhoDireito());
+                }
             }
         }
     }
