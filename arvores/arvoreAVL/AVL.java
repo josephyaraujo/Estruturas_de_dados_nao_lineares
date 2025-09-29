@@ -53,11 +53,22 @@ public class AVL extends ABP implements ArvoreAVL {
 
     @Override
     public void altFBremocao(AVLNo n) {
-        // Implementação básica: atualiza o fator de balanceamento após remoção
         while (n != null) {
-            int fb = n.getFB();
-            if (fb == 2 || fb == -2) {
-                rotacao(n, (AVLNo) n.getPai());
+            if (n.getPai() != null) {
+                if (n == n.getPai().getFilhoEsquerdo()) {
+                    ((AVLNo) n.getPai()).setFB(((AVLNo) n.getPai()).getFB() - 1);
+                } else {
+                    ((AVLNo) n.getPai()).setFB(((AVLNo) n.getPai()).getFB() + 1);
+                }
+                
+                if (((AVLNo) n.getPai()).getFB() != 0) {
+                    break; // A árvore está balanceada
+                
+                } 
+            }
+            if (Math.abs(n.getFB()) == 2) {
+                AVLNo filho = n.getFB() == 2 ? (AVLNo) n.getFilhoEsquerdo() : (AVLNo) n.getFilhoDireito();
+                rotacao(n, filho);
             }
             n = (AVLNo) n.getPai();
         }
