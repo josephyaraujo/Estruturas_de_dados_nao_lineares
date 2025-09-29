@@ -14,8 +14,11 @@ public class AVL extends ABP implements ArvoreAVL {
 
     @Override
     public void rotacao(AVLNo pai, AVLNo atual) {
+        if (pai == null || atual == null) {
+            throw new RuntimeException("Os nós pai e atual não podem ser nulos para a rotação.");
+        }
         if (pai.getFB() == 2) { // Desbalanceamento à esquerda
-            if (atual.getFB() > 0) {
+            if (atual.getFB() >= 0) {
                 rotacaoSimplesDireita(pai, atual);
             } else { //Rotação dupla à direita
                 if (atual.getFilhoDireito() != null) {
@@ -26,7 +29,7 @@ public class AVL extends ABP implements ArvoreAVL {
                 }
             }
         } else if (pai.getFB() == -2) { // Desbalanceamento à direita
-            if (atual.getFB() < 0) {
+            if (atual.getFB() <= 0) {
                 rotacaoSimplesEsquerda(pai, atual);
             } else { // Rotação dupla à esquerda
                 if (atual.getFilhoEsquerdo() != null) {
@@ -53,7 +56,7 @@ public class AVL extends ABP implements ArvoreAVL {
                     break; // A árvore está balanceada
                 
                 } else if (Math.abs(((AVLNo) n.getPai()).getFB()) == 2) {
-                    rotacao((AVLNo) n.getPai(), (AVLNo) n.getPai().getPai());
+                    rotacao((AVLNo) n.getPai(), n);
                     break; // Após a rotação, a árvore está balanceada
                 }
             }
@@ -77,8 +80,10 @@ public class AVL extends ABP implements ArvoreAVL {
                 } 
             }
             if (Math.abs(n.getFB()) == 2) {
-                AVLNo filho = n.getFB() == 2 ? (AVLNo) n.getFilhoEsquerdo() : (AVLNo) n.getFilhoDireito();
-                rotacao(n, filho);
+                AVLNo filho = n.getFB() >= 0 ? (AVLNo) n.getFilhoEsquerdo() : (AVLNo) n.getFilhoDireito();
+                if (filho != null) {
+                    rotacao(n, filho);
+                }
             }
             n = (AVLNo) n.getPai();
         }
@@ -146,6 +151,10 @@ public class AVL extends ABP implements ArvoreAVL {
     public void inserir(Object o) {
         AVLNo parent = (AVLNo) buscar(raiz, o);
         AVLNo novoNo = new AVLNo(parent, o, 0);
+        if (parent == null) {
+            raiz = novoNo; // A árvore estava vazia
+            return;
+        }
         if ((int) parent.getValor() > (int) o) {
             parent.setFilhoEsquerdo(novoNo);
             parent.setFB(parent.getFB() + 1);
@@ -235,6 +244,25 @@ public class AVL extends ABP implements ArvoreAVL {
             return 0;
         } else {
             return 1 + Math.max(altura((AVLNo) node.getFilhoEsquerdo()), altura((AVLNo) node.getFilhoDireito()));
+        }
+    }
+    public AVLNo buscar(AVLNo n, Object o) {
+        if (n == null) {
+            return null;
+        }
+        if ((int) n.getValor() == (int) o) {
+            return n;
+
+        } else if ((int) o < (int) n.getValor()) {
+            if (n.getFilhoEsquerdo() == null) {
+                return n; // Retorna o nó pai para inserção
+            }
+            return buscar((AVLNo) n.getFilhoEsquerdo(), o);
+        } else {
+            if (n.getFilhoDireito() == null) {
+                return n; // Retorna o nó pai para inserção
+            }
+            return buscar((AVLNo) n.getFilhoDireito(), o);
         }
     }
     public void printArvoreComFB() {
