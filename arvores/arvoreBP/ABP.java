@@ -252,36 +252,48 @@ public class ABP implements ArvoreBinariaPesquisa {
     }
 
 // Método adicional para imprimir a árvore de cima para baixo (nível por nível)
-public void printArvore() {
-    if (root == null) {
-        System.out.println("(árvore vazia)");
-        return;
-    }
-    ArrayList<No> nivelAtual = new ArrayList<>();
-    nivelAtual.add(root);
-
-    while (!nivelAtual.isEmpty()) {
-        ArrayList<No> proximoNivel = new ArrayList<>();
-        for (No n : nivelAtual) {
-            if (n != null) {
-                System.out.print(n.getValor() + " ");
-                proximoNivel.add(n.getFilhoEsquerdo());
-                proximoNivel.add(n.getFilhoDireito());
-            } else {
+    public void printArvore() {
+        if (root == null) {
+            System.out.println("(árvore vazia)");
+            return;
+        }
+        
+        int h = altura(raiz());
+        int niveis = h + 1;
+        
+        for (int nivel = 0; nivel < niveis; nivel++) {
+            // Calcula espaçamento
+            int espacosAntes = (int) Math.pow(2, (h - nivel)) - 1;
+            int espacosEntre = (int) Math.pow(2, (h - nivel + 1)) - 1;
+            
+            // Espaços antes do primeiro nó
+            for (int i = 0; i < espacosAntes; i++) {
                 System.out.print("  ");
             }
+            
+            // Imprime nós do nível atual
+            imprimirNivel(root, nivel, 0, espacosEntre);
+            System.out.println();
         }
-        System.out.println();
-        // Verifica se o próximo nível tem pelo menos um nó não nulo
-        boolean temNo = false;
-        for (No no : proximoNivel) {
-            if (no != null) {
-                temNo = true;
-                break;
-            }
-        }
-        if (!temNo) break;
-        nivelAtual = proximoNivel;
     }
-}
+
+    private void imprimirNivel(No no, int nivelAlvo, int nivelAtual, int espacosEntre) {
+        if (no == null) {
+            System.out.print("  ");
+            for (int i = 0; i < espacosEntre; i++) {
+                System.out.print("  ");
+            }
+            return;
+        }
+        
+        if (nivelAtual == nivelAlvo) {
+            System.out.print(String.format("%2d", no.getValor()));
+            for (int i = 0; i < espacosEntre; i++) {
+                System.out.print("  ");
+            }
+        } else {
+            imprimirNivel(no.getFilhoEsquerdo(), nivelAlvo, nivelAtual + 1, espacosEntre);
+            imprimirNivel(no.getFilhoDireito(), nivelAlvo, nivelAtual + 1, espacosEntre);
+        }
+    }
 }
