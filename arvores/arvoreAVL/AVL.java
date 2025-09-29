@@ -1,10 +1,13 @@
 package arvores.arvoreAVL;
 import arvores.arvoreBP.ABP;
-import java.lang.Math;
 
 public class AVL extends ABP implements ArvoreAVL {
+    AVLNo raiz;
+    int tamanho;
+
     public AVL(Object o) {
         super(o);
+        raiz = new AVLNo(null, o, 0);
     }
 
     @Override
@@ -31,14 +34,15 @@ public class AVL extends ABP implements ArvoreAVL {
         while (n != null) {
             if (n.getPai() != null) {
                 if (n == n.getPai().getFilhoEsquerdo()) {
-                    n.getPai().setFB(n.getPai().getFB() - 1);
+                    ((AVLNo) n.getPai()).setFB(((AVLNo) n.getPai()).getFB() + 1);
                 } else {
-                    n.getPai().setFB(n.getPai().getFB() + 1);
+                    ((AVLNo) n.getPai()).setFB(((AVLNo) n.getPai()).getFB() - 1);
                 }
 
-                if (n.getPai().getFB() == 0) {
+                if (((AVLNo) n.getPai()).getFB() == 0) {
                     break; // A árvore está balanceada
-                } else if (Math.abs(n.getPai().getFB()) == 2) {
+                
+                } else if (Math.abs(((AVLNo) n.getPai()).getFB()) == 2) {
                     rotacao((AVLNo) n.getPai(), (AVLNo) n.getPai().getPai());
                     break; // Após a rotação, a árvore está balanceada
                 }
@@ -48,4 +52,66 @@ public class AVL extends ABP implements ArvoreAVL {
     }
 
     @Override
-    public void altFBremocao(
+    public void altFBremocao(AVLNo n) {
+        // Implementação básica: atualiza o fator de balanceamento após remoção
+        while (n != null) {
+            int fb = n.getFB();
+            if (fb == 2 || fb == -2) {
+                rotacao(n, (AVLNo) n.getPai());
+            }
+            n = (AVLNo) n.getPai();
+        }
+    }
+
+    // Implementação da rotação simples à direita
+    @Override
+    public void rotacaoSimplesDireita(AVLNo pai, AVLNo atual) {
+        AVLNo filhoEsquerdo = (AVLNo) atual.getFilhoEsquerdo();
+        atual.setFilhoEsquerdo(filhoEsquerdo.getFilhoDireito());
+        if (filhoEsquerdo.getFilhoDireito() != null) {
+            ((AVLNo) filhoEsquerdo.getFilhoDireito()).setPai(atual);
+        }
+        filhoEsquerdo.setFilhoDireito(atual);
+        filhoEsquerdo.setPai(pai);
+
+        if (pai == null) {
+            raiz = filhoEsquerdo;
+        } else if (pai.getFilhoEsquerdo() == atual) {
+            pai.setFilhoEsquerdo(filhoEsquerdo);
+        } else {
+            pai.setFilhoDireito(filhoEsquerdo);
+        }
+        atual.setPai(filhoEsquerdo);
+
+        // Atualiza os fatores de balanceamento
+        atual.setFB(atual.getFB() + 1 - Math.min(filhoEsquerdo.getFB(), 0));
+        filhoEsquerdo.setFB(filhoEsquerdo.getFB() + 1 + Math.max(atual.getFB(), 0));
+    }
+
+    // Implementação da rotação simples à esquerda
+    @Override
+    public void rotacaoSimplesEsquerda(AVLNo pai, AVLNo atual) {
+        AVLNo filhoDireito = (AVLNo) atual.getFilhoDireito();
+        atual.setFilhoDireito(filhoDireito.getFilhoEsquerdo());
+        if (filhoDireito.getFilhoEsquerdo() != null) {
+            ((AVLNo) filhoDireito.getFilhoEsquerdo()).setPai(atual);
+        }
+        filhoDireito.setFilhoEsquerdo(atual);
+        filhoDireito.setPai(pai);
+
+        if (pai == null) {
+            raiz = filhoDireito;
+        } else if (pai.getFilhoEsquerdo() == atual) {
+            pai.setFilhoEsquerdo(filhoDireito);
+        } else {
+            pai.setFilhoDireito(filhoDireito);
+        }
+        atual.setPai(filhoDireito);
+
+        // Atualiza os fatores de balanceamento
+        atual.setFB(atual.getFB() - 1 - Math.max(filhoDireito.getFB(), 0));
+        filhoDireito.setFB(filhoDireito.getFB() - 1 + Math.min(atual.getFB(), 0));
+    }
+}
+
+    
