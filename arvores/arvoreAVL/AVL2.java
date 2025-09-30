@@ -3,11 +3,11 @@ import arvores.arvoreBP.ABP;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AVL extends ABP implements ArvoreAVL {
+public class AVL2 extends ABP implements ArvoreAVL {
     AVLNo raiz;
     int tamanho;
 
-    public AVL(Object o) {
+    public AVL2(Object o) {
         super(o);
         raiz = new AVLNo(null, o, 0);
     }
@@ -17,77 +17,76 @@ public class AVL extends ABP implements ArvoreAVL {
         if (pai == null || atual == null) {
             throw new RuntimeException("Os nós pai e atual não podem ser nulos para a rotação.");
         }
+        
         if (pai.getFB() == 2) { // Desbalanceamento à esquerda
-            if (atual.getFB() >= 0) {
+            if (atual.getFB() >= 0) { // Left-Left
                 rotacaoSimplesDireita(pai, atual);
-            } else { //Rotação dupla à direita
-                if (atual.getFilhoDireito() != null) {
-                    rotacaoSimplesEsquerda(atual, (AVLNo) atual.getFilhoDireito());
-                }
-                if (pai.getFilhoEsquerdo() != null) {
-                    rotacaoSimplesDireita(pai, (AVLNo) pai.getFilhoEsquerdo());
-                }
+            } else { // Left-Right
+                // Rotações duplas
+                AVLNo neto = (AVLNo) atual.getFilhoDireito();
+                rotacaoSimplesEsquerda(atual, neto);
+                rotacaoSimplesDireita(pai, (AVLNo) pai.getFilhoEsquerdo());
             }
         } else if (pai.getFB() == -2) { // Desbalanceamento à direita
-            if (atual.getFB() <= 0) {
+            if (atual.getFB() <= 0) { // Right-Right
                 rotacaoSimplesEsquerda(pai, atual);
-            } else { // Rotação dupla à esquerda
-                if (atual.getFilhoEsquerdo() != null) {
-                    rotacaoSimplesDireita(atual, (AVLNo) atual.getFilhoEsquerdo()); 
-                }
-                if (pai.getFilhoDireito() != null) {
-                    rotacaoSimplesEsquerda(pai, (AVLNo) pai.getFilhoDireito());
-                }
+            } else { // Right-Left
+                // Rotações duplas
+                AVLNo neto = (AVLNo) atual.getFilhoEsquerdo();
+                rotacaoSimplesDireita(atual, neto);
+                rotacaoSimplesEsquerda(pai, (AVLNo) pai.getFilhoDireito());
             }
         }
     }
 
     @Override
     public void altFBinsercao(AVLNo n) {
-        while (n.getFB() != 0 && n.getPai()!= null) {
-            AVLNo atual = n;
-            n = (AVLNo) n.getPai();
-
-            if (atual == n.getFilhoEsquerdo()) {
-                n.setFB(n.getFB() + 1);
-            } else {
-                n.setFB(n.getFB() - 1);
+        AVLNo atual = n;
+        while (atual != null) {
+            // Verifica se precisa de rotação
+            if (Math.abs(atual.getFB()) == 2) {
+                AVLNo filho = atual.getFB() > 0 ? 
+                    (AVLNo) atual.getFilhoEsquerdo() : 
+                    (AVLNo) atual.getFilhoDireito();
+                rotacao(atual, filho);
+                break;
             }
-            if (atual.getFB() == 0) {
-                break; // A árvore está balanceada
+            
+            // Propaga para o pai
+            if (atual.getPai() != null) {
+                if (atual == atual.getPai().getFilhoEsquerdo()) {
+                    ((AVLNo) atual.getPai()).setFB(((AVLNo) atual.getPai()).getFB() + 1);
+                } else {
+                    ((AVLNo) atual.getPai()).setFB(((AVLNo) atual.getPai()).getFB() - 1);
+                }
             }
-
-            if (Math.abs(n.getFB()) == 2) {
-                rotacao(n, atual);
-                break; // Após a rotação, a árvore está balanceada
-            }
+            
+            atual = (AVLNo) atual.getPai();
         }
     }
 
     @Override
     public void altFBremocao(AVLNo n) {
-        while (n != null) {
-            AVLNo atual = n;
-            n = (AVLNo) n.getPai();
-
-            if (n != null) {
-                if (atual == n.getFilhoEsquerdo()) {
-                    n.setFB(n.getFB() - 1);
-                } else {
-                    n.setFB(n.getFB() + 1);
-                }
-                
-                if (atual.getFB() != 0) {
-                    break; // A árvore está balanceada
-                } 
-            }
+        AVLNo atual = n;
+        while (atual != null) {
+            // Verifica se precisa de rotação
             if (Math.abs(atual.getFB()) == 2) {
-                AVLNo filho = atual.getFB() >= 2 ? (AVLNo) atual.getFilhoEsquerdo() : (AVLNo) atual.getFilhoDireito();
+                AVLNo filho = atual.getFB() >= 0 ? 
+                    (AVLNo) atual.getFilhoEsquerdo() : 
+                    (AVLNo) atual.getFilhoDireito();
                 rotacao(atual, filho);
             }
-            if (n == null) {
-                break; // Chegou à raiz
+            
+            // Propaga para o pai
+            if (atual.getPai() != null) {
+                if (atual == atual.getPai().getFilhoEsquerdo()) {
+                    ((AVLNo) atual.getPai()).setFB(((AVLNo) atual.getPai()).getFB() - 1);
+                } else {
+                    ((AVLNo) atual.getPai()).setFB(((AVLNo) atual.getPai()).getFB() + 1);
+                }
             }
+            
+            atual = (AVLNo) atual.getPai();
         }
     }
 
@@ -157,19 +156,20 @@ public class AVL extends ABP implements ArvoreAVL {
 
     @Override
     public void inserir(Object o) {
-        AVLNo parent = (AVLNo) buscar(raiz, o);
-        AVLNo novoNo = new AVLNo(parent, o, 0);
-        if (parent == null) {
-            raiz = new AVLNo(null, o, 0); // A árvore estava vazia
-            tamanho = 1; 
+        if (raiz == null) {
+            raiz = new AVLNo(null, o, 0);
+            tamanho = 1;
             return;
         }
-
+        
+        AVLNo parent = (AVLNo) buscar(raiz, o);
+        
         if (parent.getValor().equals(o)) {
             throw new RuntimeException("O valor já existe na árvore");
         }
 
-        if ((int) parent.getValor() > (int) o) {
+        AVLNo novoNo = new AVLNo(parent, o, 0);
+        if ((int) o < (int) parent.getValor()) {
             parent.setFilhoEsquerdo(novoNo);
             parent.setFB(parent.getFB() + 1);
         } else {
@@ -177,7 +177,6 @@ public class AVL extends ABP implements ArvoreAVL {
             parent.setFB(parent.getFB() - 1);
         }
         tamanho++;
-        novoNo.setPai(parent);
         altFBinsercao(parent);
     }
 
@@ -186,49 +185,62 @@ public class AVL extends ABP implements ArvoreAVL {
         AVLNo node = (AVLNo) buscar(raiz, o);
         if (node == null) {
             throw new RuntimeException("O valor não foi encontrado na árvore");
+        }
 
-        } else if (node.getFilhoEsquerdo() == null && node.getFilhoDireito() == null) {
+        AVLNo paiParaBalancear = null;
+        
+        if (node.getFilhoEsquerdo() == null && node.getFilhoDireito() == null) {
+            // Caso 1: Nó folha
             if (node.getPai() == null) {
-                raiz = null; // A árvore ficará vazia
-            } else if (node == node.getPai().getFilhoEsquerdo()) {
-                node.getPai().setFilhoEsquerdo(null);
-                ((AVLNo) node.getPai()).setFB(((AVLNo) node.getPai()).getFB() - 1);
-                altFBremocao((AVLNo) node.getPai());
+                raiz = null;
             } else {
-                node.getPai().setFilhoDireito(null);
-                ((AVLNo) node.getPai()).setFB(((AVLNo) node.getPai()).getFB() + 1);
-                altFBremocao((AVLNo) node.getPai());
+                paiParaBalancear = (AVLNo) node.getPai();
+                if (node == node.getPai().getFilhoEsquerdo()) {
+                    node.getPai().setFilhoEsquerdo(null);
+                    paiParaBalancear.setFB(paiParaBalancear.getFB() - 1);
+                } else {
+                    node.getPai().setFilhoDireito(null);
+                    paiParaBalancear.setFB(paiParaBalancear.getFB() + 1);
+                }
             }
         } else if (temFilhoEsquerdo(node) ^ temFilhoDireito(node)) {
+            // Caso 2: Nó com um filho
             AVLNo filho = (AVLNo) (temFilhoEsquerdo(node) ? node.getFilhoEsquerdo() : node.getFilhoDireito());
             
             if (node.getPai() == null) {
                 raiz = filho;
                 filho.setPai(null);
-                altFBremocao(filho);
+                paiParaBalancear = filho;
             } else {
+                paiParaBalancear = (AVLNo) node.getPai();
                 if (node == node.getPai().getFilhoEsquerdo()) {
                     node.getPai().setFilhoEsquerdo(filho);
                     filho.setPai(node.getPai());
-                    ((AVLNo) node.getPai()).setFB(((AVLNo) node.getPai()).getFB() - 1);
-                    altFBremocao((AVLNo) node.getPai());
+                    paiParaBalancear.setFB(paiParaBalancear.getFB() - 1);
                 } else {
                     node.getPai().setFilhoDireito(filho);
                     filho.setPai(node.getPai());
-                    ((AVLNo) node.getPai()).setFB(((AVLNo) node.getPai()).getFB() + 1);
-                    altFBremocao((AVLNo) node.getPai());
+                    paiParaBalancear.setFB(paiParaBalancear.getFB() + 1);
                 }
             }
         } else {
+            // Caso 3: Nó com dois filhos
             AVLNo sucessor = (AVLNo) node.getFilhoDireito();
             while (sucessor.getFilhoEsquerdo() != null) {
                 sucessor = (AVLNo) sucessor.getFilhoEsquerdo();
             }
             Object substituto = sucessor.getValor();
+            paiParaBalancear = (AVLNo) sucessor.getPai();
             remover(substituto);
             node.setValor(substituto);
         }
+        
         tamanho--;
+        
+        if (paiParaBalancear != null) {
+            altFBremocao(paiParaBalancear);
+        }
+        
         return o;
     }
     public AVLNo filhoEsquerdo(AVLNo node) {
@@ -276,6 +288,23 @@ public class AVL extends ABP implements ArvoreAVL {
                 return n; // Retorna o nó pai para inserção
             }
             return buscar((AVLNo) n.getFilhoDireito(), o);
+        }
+    }
+    public void verificarBalanceamento() {
+        System.out.println("Verificando balanceamento:");
+        verificarBalanceamentoRecursivo(raiz);
+    }
+
+    private void verificarBalanceamentoRecursivo(AVLNo no) {
+        if (no != null) {
+            int alturaEsq = altura((AVLNo) no.getFilhoEsquerdo());
+            int alturaDir = altura((AVLNo) no.getFilhoDireito());
+            int fbCalculado = alturaEsq - alturaDir;
+            
+            System.out.println("Nó " + no.getValor() + ": FB armazenado=" + no.getFB() + ", FB calculado=" + fbCalculado);
+            
+            verificarBalanceamentoRecursivo((AVLNo) no.getFilhoEsquerdo());
+            verificarBalanceamentoRecursivo((AVLNo) no.getFilhoDireito());
         }
     }
     public void printArvoreComFB() {
