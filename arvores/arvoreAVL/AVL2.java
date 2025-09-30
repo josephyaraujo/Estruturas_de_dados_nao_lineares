@@ -1,7 +1,9 @@
 package arvores.arvoreAVL;
 import arvores.arvoreBP.ABP;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class AVL2 extends ABP implements ArvoreAVL {
     AVLNo raiz;
@@ -13,28 +15,22 @@ public class AVL2 extends ABP implements ArvoreAVL {
     }
 
     @Override
-    public void rotacao(AVLNo pai, AVLNo atual) {
-        if (pai == null || atual == null) {
-            throw new RuntimeException("Os nós pai e atual não podem ser nulos para a rotação.");
-        }
+    public void rotacao(AVLNo desbalanceado, AVLNo filho) {
+        if (desbalanceado == null || filho == null) return;
         
-        if (pai.getFB() == 2) { // Desbalanceamento à esquerda
-            if (atual.getFB() >= 0) { // Left-Left
-                rotacaoSimplesDireita(pai, atual);
+        if (desbalanceado.getFB() == 2) { // Desbalanceamento à esquerda
+            if (filho.getFB() >= 0) { // Left-Left
+                rotacaoSimplesDireita(desbalanceado, filho);
             } else { // Left-Right
-                // Rotações duplas
-                AVLNo neto = (AVLNo) atual.getFilhoDireito();
-                rotacaoSimplesEsquerda(atual, neto);
-                rotacaoSimplesDireita(pai, (AVLNo) pai.getFilhoEsquerdo());
+                rotacaoSimplesEsquerda(filho, (AVLNo) filho.getFilhoDireito());
+                rotacaoSimplesDireita(desbalanceado, (AVLNo) desbalanceado.getFilhoEsquerdo());
             }
-        } else if (pai.getFB() == -2) { // Desbalanceamento à direita
-            if (atual.getFB() <= 0) { // Right-Right
-                rotacaoSimplesEsquerda(pai, atual);
+        } else if (desbalanceado.getFB() == -2) { // Desbalanceamento à direita
+            if (filho.getFB() <= 0) { // Right-Right
+                rotacaoSimplesEsquerda(desbalanceado, filho);
             } else { // Right-Left
-                // Rotações duplas
-                AVLNo neto = (AVLNo) atual.getFilhoEsquerdo();
-                rotacaoSimplesDireita(atual, neto);
-                rotacaoSimplesEsquerda(pai, (AVLNo) pai.getFilhoDireito());
+                rotacaoSimplesDireita(filho, (AVLNo) filho.getFilhoEsquerdo());
+                rotacaoSimplesEsquerda(desbalanceado, (AVLNo) desbalanceado.getFilhoDireito());
             }
         }
     }
@@ -43,15 +39,34 @@ public class AVL2 extends ABP implements ArvoreAVL {
     public void altFBinsercao(AVLNo n) {
         AVLNo atual = n;
         while (atual != null) {
+            // Atualiza o FB baseado na inserção (já foi feito no inserir)
             // Verifica se precisa de rotação
             if (Math.abs(atual.getFB()) == 2) {
-                AVLNo filho = atual.getFB() > 0 ? 
-                    (AVLNo) atual.getFilhoEsquerdo() : 
-                    (AVLNo) atual.getFilhoDireito();
-                rotacao(atual, filho);
+                // Determina qual rotação fazer
+                if (atual.getFB() == 2) {
+                    AVLNo filhoEsq = (AVLNo) atual.getFilhoEsquerdo();
+                    if (filhoEsq.getFB() >= 0) {
+                        // Caso Left-Left
+                        rotacaoSimplesDireita(atual, filhoEsq);
+                    } else {
+                        // Caso Left-Right
+                        rotacaoSimplesEsquerda(filhoEsq, (AVLNo) filhoEsq.getFilhoDireito());
+                        rotacaoSimplesDireita(atual, (AVLNo) atual.getFilhoEsquerdo());
+                    }
+                } else {
+                    AVLNo filhoDir = (AVLNo) atual.getFilhoDireito();
+                    if (filhoDir.getFB() <= 0) {
+                        // Caso Right-Right
+                        rotacaoSimplesEsquerda(atual, filhoDir);
+                    } else {
+                        // Caso Right-Left
+                        rotacaoSimplesDireita(filhoDir, (AVLNo) filhoDir.getFilhoEsquerdo());
+                        rotacaoSimplesEsquerda(atual, (AVLNo) atual.getFilhoDireito());
+                    }
+                }
                 break;
             }
-            
+
             // Propaga para o pai
             if (atual.getPai() != null) {
                 if (atual == atual.getPai().getFilhoEsquerdo()) {
@@ -60,7 +75,12 @@ public class AVL2 extends ABP implements ArvoreAVL {
                     ((AVLNo) atual.getPai()).setFB(((AVLNo) atual.getPai()).getFB() - 1);
                 }
             }
-            
+
+            // Se o FB do pai ficou 0, para a propagação
+            if (atual.getPai() != null && ((AVLNo) atual.getPai()).getFB() == 0) {
+                break;
+            }
+
             atual = (AVLNo) atual.getPai();
         }
     }
@@ -76,7 +96,7 @@ public class AVL2 extends ABP implements ArvoreAVL {
                     (AVLNo) atual.getFilhoDireito();
                 rotacao(atual, filho);
             }
-            
+
             // Propaga para o pai
             if (atual.getPai() != null) {
                 if (atual == atual.getPai().getFilhoEsquerdo()) {
@@ -85,7 +105,7 @@ public class AVL2 extends ABP implements ArvoreAVL {
                     ((AVLNo) atual.getPai()).setFB(((AVLNo) atual.getPai()).getFB() + 1);
                 }
             }
-            
+
             atual = (AVLNo) atual.getPai();
         }
     }
@@ -162,10 +182,11 @@ public class AVL2 extends ABP implements ArvoreAVL {
             return;
         }
         
-        AVLNo parent = (AVLNo) buscar(raiz, o);
+        AVLNo parent = buscar(raiz, o);
         
-        if (parent.getValor().equals(o)) {
-            throw new RuntimeException("O valor já existe na árvore");
+        // Verifica se o valor já existe
+        if (parent != null && parent.getValor().equals(o)) {
+            return; // ou lançar exceção: throw new RuntimeException("Valor duplicado");
         }
 
         AVLNo novoNo = new AVLNo(parent, o, 0);
@@ -307,69 +328,70 @@ public class AVL2 extends ABP implements ArvoreAVL {
             verificarBalanceamentoRecursivo((AVLNo) no.getFilhoDireito());
         }
     }
+    public void recalcularFBs() {
+        recalcularFBRecursivo(raiz);
+    }
+
+    private int recalcularFBRecursivo(AVLNo no) {
+        if (no == null) return 0;
+        
+        int alturaEsq = recalcularFBRecursivo((AVLNo) no.getFilhoEsquerdo());
+        int alturaDir = recalcularFBRecursivo((AVLNo) no.getFilhoDireito());
+        
+        no.setFB(alturaEsq - alturaDir);
+        return Math.max(alturaEsq, alturaDir) + 1;
+    }
     public void printArvoreComFB() {
         if (raiz == null) {
             System.out.println("(árvore vazia)");
             return;
         }
         
+        // Recalcula os FBs para garantir que estão corretos
+        recalcularFBs();
+        
         int altura = altura(raiz);
-        
-        List<List<String>> linhas = new ArrayList<>();
-        List<AVLNo> nivelAtual = new ArrayList<>();
-        List<AVLNo> proximoNivel = new ArrayList<>();
-        
-        nivelAtual.add(raiz);
-        boolean temNo = true;
+        List<List<String>> levels = new ArrayList<>();
+        Queue<AVLNo> queue = new LinkedList<>();
+        queue.add(raiz);
         
         // Coleta todos os nós por nível
-        while (temNo && altura > 0) {
-            List<String> linha = new ArrayList<>();
-            temNo = false;
+        for (int i = 0; i <= altura; i++) {
+            List<String> level = new ArrayList<>();
+            int levelSize = queue.size();
             
-            for (AVLNo n : nivelAtual) {
-                if (n == null) {
-                    linha.add("     "); // 5 espaços para manter alinhamento
-                    proximoNivel.add(null);
-                    proximoNivel.add(null);
+            for (int j = 0; j < levelSize; j++) {
+                AVLNo node = queue.poll();
+                if (node != null) {
+                    level.add(String.format("%2d[%d]", node.getValor(), node.getFB()));
+                    queue.add((AVLNo) node.getFilhoEsquerdo());
+                    queue.add((AVLNo) node.getFilhoDireito());
                 } else {
-                    // Formata: valor[FB] (ex: 5[1], 10[-1])
-                    String formato = String.format("%2d[%d]", n.getValor(), n.getFB());
-                    linha.add(formato);
-                    proximoNivel.add((AVLNo) n.getFilhoEsquerdo());
-                    proximoNivel.add((AVLNo) n.getFilhoDireito());
-                    
-                    if (n.getFilhoEsquerdo() != null || n.getFilhoDireito() != null) {
-                        temNo = true;
-                    }
+                    level.add("      ");
+                    queue.add(null);
+                    queue.add(null);
                 }
             }
-            
-            linhas.add(linha);
-            nivelAtual = new ArrayList<>(proximoNivel);
-            proximoNivel.clear();
-            altura--;
+            levels.add(level);
         }
-
-        // Imprime os nós formatados
-        for (int i = 0; i < linhas.size(); i++) {
-            List<String> linha = linhas.get(i);
-            
-            // Cálculo correto dos espaços
-            int espacosAntes = (int) Math.pow(2, (linhas.size() - i - 1)) - 1;
-            int espacosEntre = (int) Math.pow(2, (linhas.size() - i)) - 1;
+        
+        // Imprime os níveis formatados
+        for (int i = 0; i < levels.size(); i++) {
+            List<String> level = levels.get(i);
+            int spacesBefore = (int) Math.pow(2, (altura - i)) - 1;
+            int spacesBetween = (int) Math.pow(2, (altura - i + 1)) - 1;
             
             // Espaços antes do primeiro nó
-            for (int j = 0; j < espacosAntes; j++) {
-                System.out.print("     "); // 5 espaços
+            for (int s = 0; s < spacesBefore; s++) {
+                System.out.print("      ");
             }
             
-            // Imprime os nós com espaçamento
-            for (int j = 0; j < linha.size(); j++) {
-                System.out.print(linha.get(j));
-                if (j < linha.size() - 1) {
-                    for (int k = 0; k < espacosEntre; k++) {
-                        System.out.print("     "); // 5 espaços
+            // Imprime os nós
+            for (int j = 0; j < level.size(); j++) {
+                System.out.print(level.get(j));
+                if (j < level.size() - 1) {
+                    for (int s = 0; s < spacesBetween; s++) {
+                        System.out.print("      ");
                     }
                 }
             }
