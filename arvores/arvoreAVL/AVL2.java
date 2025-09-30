@@ -89,12 +89,31 @@ public class AVL2 extends ABP implements ArvoreAVL {
     public void altFBremocao(AVLNo n) {
         AVLNo atual = n;
         while (atual != null) {
+            // Atualiza o FB (já foi feito na remoção)
             // Verifica se precisa de rotação
             if (Math.abs(atual.getFB()) == 2) {
-                AVLNo filho = atual.getFB() >= 0 ? 
-                    (AVLNo) atual.getFilhoEsquerdo() : 
-                    (AVLNo) atual.getFilhoDireito();
-                rotacao(atual, filho);
+                // Determina qual rotação fazer
+                if (atual.getFB() == 2) {
+                    AVLNo filhoEsq = (AVLNo) atual.getFilhoEsquerdo();
+                    if (filhoEsq.getFB() >= 0) {
+                        // Caso Left-Left
+                        rotacaoSimplesDireita(atual, filhoEsq);
+                    } else {
+                        // Caso Left-Right
+                        rotacaoSimplesEsquerda(filhoEsq, (AVLNo) filhoEsq.getFilhoDireito());
+                        rotacaoSimplesDireita(atual, (AVLNo) atual.getFilhoEsquerdo());
+                    }
+                } else {
+                    AVLNo filhoDir = (AVLNo) atual.getFilhoDireito();
+                    if (filhoDir.getFB() <= 0) {
+                        // Caso Right-Right
+                        rotacaoSimplesEsquerda(atual, filhoDir);
+                    } else {
+                        // Caso Right-Left
+                        rotacaoSimplesDireita(filhoDir, (AVLNo) filhoDir.getFilhoEsquerdo());
+                        rotacaoSimplesEsquerda(atual, (AVLNo) atual.getFilhoDireito());
+                    }
+                }
             }
 
             // Propaga para o pai
@@ -190,15 +209,17 @@ public class AVL2 extends ABP implements ArvoreAVL {
         }
 
         AVLNo novoNo = new AVLNo(parent, o, 0);
-        if ((int) o < (int) parent.getValor()) {
+        if (parent != null && (int) o < (int) parent.getValor()) {
             parent.setFilhoEsquerdo(novoNo);
             parent.setFB(parent.getFB() + 1);
-        } else {
+        } else if (parent != null) {
             parent.setFilhoDireito(novoNo);
             parent.setFB(parent.getFB() - 1);
         }
         tamanho++;
-        altFBinsercao(parent);
+        if (parent != null) {
+            altFBinsercao(parent);
+        }
     }
 
     @Override
@@ -209,7 +230,7 @@ public class AVL2 extends ABP implements ArvoreAVL {
         }
 
         AVLNo paiParaBalancear = null;
-        
+
         if (node.getFilhoEsquerdo() == null && node.getFilhoDireito() == null) {
             // Caso 1: Nó folha
             if (node.getPai() == null) {
@@ -224,9 +245,11 @@ public class AVL2 extends ABP implements ArvoreAVL {
                     paiParaBalancear.setFB(paiParaBalancear.getFB() + 1);
                 }
             }
-        } else if (temFilhoEsquerdo(node) ^ temFilhoDireito(node)) {
+        } else if (node.getFilhoEsquerdo() == null || node.getFilhoDireito() == null) {
             // Caso 2: Nó com um filho
-            AVLNo filho = (AVLNo) (temFilhoEsquerdo(node) ? node.getFilhoEsquerdo() : node.getFilhoDireito());
+            AVLNo filho = (node.getFilhoEsquerdo() != null) ? 
+                (AVLNo) node.getFilhoEsquerdo() : 
+                (AVLNo) node.getFilhoDireito();
             
             if (node.getPai() == null) {
                 raiz = filho;
@@ -251,17 +274,31 @@ public class AVL2 extends ABP implements ArvoreAVL {
                 sucessor = (AVLNo) sucessor.getFilhoEsquerdo();
             }
             Object substituto = sucessor.getValor();
+            
+            // Remove o sucessor (que terá no máximo um filho direito)
+            // Primeiro, encontramos o pai do sucessor para balanceamento
             paiParaBalancear = (AVLNo) sucessor.getPai();
+            if (sucessor.getPai() != node) {
+                // Se o sucessor não é filho direto do nó a ser removido
+                paiParaBalancear = (AVLNo) sucessor.getPai();
+            }
+            
+            // Chama remover recursivamente para o sucessor
             remover(substituto);
+            
+            // Substitui o valor do nó
             node.setValor(substituto);
+            
+            // Não precisa decrementar tamanho aqui pois já foi feito na chamada recursiva
+            return o;
         }
-        
+
         tamanho--;
-        
+
         if (paiParaBalancear != null) {
             altFBremocao(paiParaBalancear);
         }
-        
+
         return o;
     }
     public AVLNo filhoEsquerdo(AVLNo node) {

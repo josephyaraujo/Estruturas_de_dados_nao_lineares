@@ -19,7 +19,7 @@ public class AVLTeste {
         System.out.println();
         
         arvore.inserir(8);
-        arvore.printArvoreComFB();git 
+        arvore.printArvoreComFB(); 
         System.out.println();
 
         arvore.inserir(22);
