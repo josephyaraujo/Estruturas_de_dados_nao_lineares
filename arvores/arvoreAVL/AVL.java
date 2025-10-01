@@ -1,7 +1,9 @@
 package arvores.arvoreAVL;
 import arvores.arvoreBP.ABP;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class AVL extends ABP implements ArvoreAVL {
     AVLNo raiz;
@@ -157,72 +159,74 @@ public class AVL extends ABP implements ArvoreAVL {
 
         AVLNo pai = buscar(raiz, o);
         // Se o nó retornado for igual ao valor a ser inserido, lança exceção
-        if (pai != null && pai.getValor().equals(o)) {
+        if (pai.getValor().equals(o)) {
             throw new RuntimeException("O valor já existe na árvore");
         }
         AVLNo novoNo = new AVLNo(pai, o, 0);
 
-        if (pai != null && (int) pai.getValor() > (int) o) {
+        if ((int) pai.getValor() > (int) o) {
             pai.setFilhoEsquerdo(novoNo);
             pai.setFB(pai.getFB() + 1);
         } else {
-            parent.setFilhoDireito(novoNo);
-            parent.setFB(parent.getFB() - 1);
+            pai.setFilhoDireito(novoNo);
+            pai.setFB(pai.getFB() - 1);
         }
         tamanho++;
-        novoNo.setPai(parent);
-        altFBinsercao(parent);
+        altFBinsercao(pai);
     }
 
     @Override
     public Object remover(Object o) {
-        AVLNo node = (AVLNo) buscar(raiz, o);
-        if (node == null) {
+        AVLNo no = (AVLNo) buscar(raiz, o);
+        if (no == null) {
             throw new RuntimeException("O valor não foi encontrado na árvore");
+        }
+        AVLNo noParaBalancear = null; // Nó pai para iniciar o reequilíbrio
 
-        } else if (node.getFilhoEsquerdo() == null && node.getFilhoDireito() == null) {
-            if (node.getPai() == null) {
+        if (no.getFilhoEsquerdo() == null && no.getFilhoDireito() == null) { // Nó folha
+            if (no.getPai() == null) {
                 raiz = null; // A árvore ficará vazia
-            } else if (node == node.getPai().getFilhoEsquerdo()) {
-                node.getPai().setFilhoEsquerdo(null);
-                ((AVLNo) node.getPai()).setFB(((AVLNo) node.getPai()).getFB() - 1);
-                altFBremocao((AVLNo) node.getPai());
             } else {
-                node.getPai().setFilhoDireito(null);
-                ((AVLNo) node.getPai()).setFB(((AVLNo) node.getPai()).getFB() + 1);
-                altFBremocao((AVLNo) node.getPai());
-            }
-        } else if (temFilhoEsquerdo(node) ^ temFilhoDireito(node)) {
-            AVLNo filho = (AVLNo) (temFilhoEsquerdo(node) ? node.getFilhoEsquerdo() : node.getFilhoDireito());
-            
-            if (node.getPai() == null) {
-                raiz = filho;
-                filho.setPai(null);
-                altFBremocao(filho);
-            } else {
-                if (node == node.getPai().getFilhoEsquerdo()) {
-                    node.getPai().setFilhoEsquerdo(filho);
-                    filho.setPai(node.getPai());
-                    ((AVLNo) node.getPai()).setFB(((AVLNo) node.getPai()).getFB() - 1);
-                    altFBremocao((AVLNo) node.getPai());
+                noParaBalancear = (AVLNo) no.getPai();
+                if (no == no.getPai().getFilhoEsquerdo()) {
+                    no.getPai().setFilhoEsquerdo(null);
                 } else {
-                    node.getPai().setFilhoDireito(filho);
-                    filho.setPai(node.getPai());
-                    ((AVLNo) node.getPai()).setFB(((AVLNo) node.getPai()).getFB() + 1);
-                    altFBremocao((AVLNo) node.getPai());
+                    no.getPai().setFilhoDireito(null);
                 }
             }
-        } else {
-            AVLNo sucessor = (AVLNo) node.getFilhoDireito();
+        } else if (temFilhoEsquerdo(no) ^ temFilhoDireito(no)) { // Nó com um filho
+            AVLNo filho = (AVLNo) (temFilhoEsquerdo(no) ? no.getFilhoEsquerdo() : no.getFilhoDireito());
+
+            if (no.getPai() == null) {
+                raiz = filho;
+                filho.setPai(null);
+                noParaBalancear = filho;
+            } else {
+                noParaBalancear = (AVLNo) no.getPai();
+
+                if (no == no.getPai().getFilhoEsquerdo()) {
+                    no.getPai().setFilhoEsquerdo(filho);
+                    filho.setPai(no.getPai());
+                } else {
+                    no.getPai().setFilhoDireito(filho);
+                    filho.setPai(no.getPai());
+                }
+            }
+        } else { // Nó com dois filhos
+            AVLNo sucessor = (AVLNo) no.getFilhoDireito();
             while (sucessor.getFilhoEsquerdo() != null) {
                 sucessor = (AVLNo) sucessor.getFilhoEsquerdo();
             }
             Object substituto = sucessor.getValor();
             remover(substituto);
-            node.setValor(substituto);
+            no.setValor(substituto);
+            return o; // Retorna após a remoção do sucessor
         }
         tamanho--;
-        return o;
+        if (noParaBalancear != null) {
+            altFBremocao(noParaBalancear); // Inicia o reequilíbrio a partir do nó desbalanceado
+        }
+        return o; // Retorna o valor removido
     }
     public AVLNo filhoEsquerdo(AVLNo node) {
         return (AVLNo) node.getFilhoEsquerdo();
@@ -252,7 +256,7 @@ public class AVL extends ABP implements ArvoreAVL {
             return 1 + Math.max(altura((AVLNo) node.getFilhoEsquerdo()), altura((AVLNo) node.getFilhoDireito()));
         }
     }
-    public AVLNo buscar(AVLNo n, Object o) {
+    public AVLNo buscar (AVLNo n, Object o) {
         if (n == null) {
             return null;
         }
@@ -271,69 +275,71 @@ public class AVL extends ABP implements ArvoreAVL {
             return buscar((AVLNo) n.getFilhoDireito(), o);
         }
     }
+    //Métodos auxiliares para impressão da árvore com fatores de balanceamento
+    public void formataNos() {
+        formataNosRecursivo(raiz);
+    }
+
+    private int formataNosRecursivo(AVLNo no) {
+        if (no == null) return 0;
+
+        int alturaEsq = formataNosRecursivo((AVLNo) no.getFilhoEsquerdo());
+        int alturaDir = formataNosRecursivo((AVLNo) no.getFilhoDireito());
+
+        no.setFB(alturaEsq - alturaDir);
+        return Math.max(alturaEsq, alturaDir) + 1;
+    }
     public void printArvoreComFB() {
         if (raiz == null) {
             System.out.println("(árvore vazia)");
             return;
         }
-        
+
+        // Formata os nós para garantir que os nós estão corretos
+        formataNos();
+
         int altura = altura(raiz);
-        
-        List<List<String>> linhas = new ArrayList<>();
-        List<AVLNo> nivelAtual = new ArrayList<>();
-        List<AVLNo> proximoNivel = new ArrayList<>();
-        
-        nivelAtual.add(raiz);
-        boolean temNo = true;
+        List<List<String>> levels = new ArrayList<>();
+        Queue<AVLNo> queue = new LinkedList<>();
+        queue.add(raiz);
         
         // Coleta todos os nós por nível
-        while (temNo && altura > 0) {
-            List<String> linha = new ArrayList<>();
-            temNo = false;
+        for (int i = 0; i <= altura; i++) {
+            List<String> level = new ArrayList<>();
+            int levelSize = queue.size();
             
-            for (AVLNo n : nivelAtual) {
-                if (n == null) {
-                    linha.add("     "); // 5 espaços para manter alinhamento
-                    proximoNivel.add(null);
-                    proximoNivel.add(null);
+            for (int j = 0; j < levelSize; j++) {
+                AVLNo node = queue.poll();
+                if (node != null) {
+                    level.add(String.format("%2d[%d]", node.getValor(), node.getFB()));
+                    queue.add((AVLNo) node.getFilhoEsquerdo());
+                    queue.add((AVLNo) node.getFilhoDireito());
                 } else {
-                    // Formata: valor[FB] (ex: 5[1], 10[-1])
-                    String formato = String.format("%2d[%d]", n.getValor(), n.getFB());
-                    linha.add(formato);
-                    proximoNivel.add((AVLNo) n.getFilhoEsquerdo());
-                    proximoNivel.add((AVLNo) n.getFilhoDireito());
-                    
-                    if (n.getFilhoEsquerdo() != null || n.getFilhoDireito() != null) {
-                        temNo = true;
-                    }
+                    level.add("      ");
+                    queue.add(null);
+                    queue.add(null);
                 }
             }
-            
-            linhas.add(linha);
-            nivelAtual = new ArrayList<>(proximoNivel);
-            proximoNivel.clear();
-            altura--;
+            levels.add(level);
         }
-
-        // Imprime os nós formatados
-        for (int i = 0; i < linhas.size(); i++) {
-            List<String> linha = linhas.get(i);
-            
-            // Cálculo correto dos espaços
-            int espacosAntes = (int) Math.pow(2, (linhas.size() - i - 1)) - 1;
-            int espacosEntre = (int) Math.pow(2, (linhas.size() - i)) - 1;
+        
+        // Imprime os níveis formatados
+        for (int i = 0; i < levels.size(); i++) {
+            List<String> level = levels.get(i);
+            int spacesBefore = (int) Math.pow(2, (altura - i)) - 1;
+            int spacesBetween = (int) Math.pow(2, (altura - i + 1)) - 1;
             
             // Espaços antes do primeiro nó
-            for (int j = 0; j < espacosAntes; j++) {
-                System.out.print("     "); // 5 espaços
+            for (int s = 0; s < spacesBefore; s++) {
+                System.out.print("      ");
             }
             
-            // Imprime os nós com espaçamento
-            for (int j = 0; j < linha.size(); j++) {
-                System.out.print(linha.get(j));
-                if (j < linha.size() - 1) {
-                    for (int k = 0; k < espacosEntre; k++) {
-                        System.out.print("     "); // 5 espaços
+            // Imprime os nós
+            for (int j = 0; j < level.size(); j++) {
+                System.out.print(level.get(j));
+                if (j < level.size() - 1) {
+                    for (int s = 0; s < spacesBetween; s++) {
+                        System.out.print("      ");
                     }
                 }
             }
