@@ -1,5 +1,9 @@
 package arvores.arvoreAVL;
 import arvores.arvoreBP.No;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 
 public class AVLNo extends No {
     private int fb; // Fator de balanceamento
