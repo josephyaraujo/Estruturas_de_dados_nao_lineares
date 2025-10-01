@@ -39,31 +39,15 @@ public class AVL2 extends ABP implements ArvoreAVL {
     public void altFBinsercao(AVLNo n) {
         AVLNo atual = n;
         while (atual != null) {
-            // Atualiza o FB baseado na inserção (já foi feito no inserir)
             // Verifica se precisa de rotação
             if (Math.abs(atual.getFB()) == 2) {
-                // Determina qual rotação fazer
-                if (atual.getFB() == 2) {
-                    AVLNo filhoEsq = (AVLNo) atual.getFilhoEsquerdo();
-                    if (filhoEsq.getFB() >= 0) {
-                        // Caso Left-Left
-                        rotacaoSimplesDireita(atual, filhoEsq);
-                    } else {
-                        // Caso Left-Right
-                        rotacaoSimplesEsquerda(filhoEsq, (AVLNo) filhoEsq.getFilhoDireito());
-                        rotacaoSimplesDireita(atual, (AVLNo) atual.getFilhoEsquerdo());
-                    }
-                } else {
-                    AVLNo filhoDir = (AVLNo) atual.getFilhoDireito();
-                    if (filhoDir.getFB() <= 0) {
-                        // Caso Right-Right
-                        rotacaoSimplesEsquerda(atual, filhoDir);
-                    } else {
-                        // Caso Right-Left
-                        rotacaoSimplesDireita(filhoDir, (AVLNo) filhoDir.getFilhoEsquerdo());
-                        rotacaoSimplesEsquerda(atual, (AVLNo) atual.getFilhoDireito());
-                    }
-                }
+                // Determina qual filho está no caminho do desbalanceamento
+                AVLNo filho = atual.getFB() > 0 ? 
+                    (AVLNo) atual.getFilhoEsquerdo() : 
+                    (AVLNo) atual.getFilhoDireito();
+                
+                // Chama o método rotacao que já decide o tipo de rotação
+                rotacao(atual, filho);
                 break;
             }
 
@@ -85,35 +69,20 @@ public class AVL2 extends ABP implements ArvoreAVL {
         }
     }
 
+
     @Override
     public void altFBremocao(AVLNo n) {
         AVLNo atual = n;
         while (atual != null) {
-            // Atualiza o FB (já foi feito na remoção)
             // Verifica se precisa de rotação
             if (Math.abs(atual.getFB()) == 2) {
-                // Determina qual rotação fazer
-                if (atual.getFB() == 2) {
-                    AVLNo filhoEsq = (AVLNo) atual.getFilhoEsquerdo();
-                    if (filhoEsq.getFB() >= 0) {
-                        // Caso Left-Left
-                        rotacaoSimplesDireita(atual, filhoEsq);
-                    } else {
-                        // Caso Left-Right
-                        rotacaoSimplesEsquerda(filhoEsq, (AVLNo) filhoEsq.getFilhoDireito());
-                        rotacaoSimplesDireita(atual, (AVLNo) atual.getFilhoEsquerdo());
-                    }
-                } else {
-                    AVLNo filhoDir = (AVLNo) atual.getFilhoDireito();
-                    if (filhoDir.getFB() <= 0) {
-                        // Caso Right-Right
-                        rotacaoSimplesEsquerda(atual, filhoDir);
-                    } else {
-                        // Caso Right-Left
-                        rotacaoSimplesDireita(filhoDir, (AVLNo) filhoDir.getFilhoEsquerdo());
-                        rotacaoSimplesEsquerda(atual, (AVLNo) atual.getFilhoDireito());
-                    }
-                }
+                // Determina qual filho está no caminho do desbalanceamento
+                AVLNo filho = atual.getFB() >= 0 ? 
+                    (AVLNo) atual.getFilhoEsquerdo() : 
+                    (AVLNo) atual.getFilhoDireito();
+                
+                // Chama o método rotacao que já decide o tipo de rotação
+                rotacao(atual, filho);
             }
 
             // Propaga para o pai
@@ -124,7 +93,9 @@ public class AVL2 extends ABP implements ArvoreAVL {
                     ((AVLNo) atual.getPai()).setFB(((AVLNo) atual.getPai()).getFB() + 1);
                 }
             }
-
+            if (atual.getPai() != null && ((AVLNo) atual.getPai()).getFB() != 0) {
+            break;
+            }
             atual = (AVLNo) atual.getPai();
         }
     }
