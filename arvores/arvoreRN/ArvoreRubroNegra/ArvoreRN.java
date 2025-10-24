@@ -24,6 +24,9 @@ public class ArvoreRN extends ABP {
                     repintamento(pai, tio, avo);
                 } else { // Caso 2 e 3: tio é negro
                     rotacoesRN(n, pai, avo);
+                    // Recolore pai e avô após rotações
+                    pai.setCor('N');
+                    avo.setCor('R');
                 }
             }
         }
@@ -72,8 +75,8 @@ public class ArvoreRN extends ABP {
         }
         filhoPromovido.setDireito(n); //Atualiza o filho direito do sucessor para n
         //Recolore os nós
-        filhoPromovido.setCor('N');
-        n.setCor('R');
+        //filhoPromovido.setCor('N');
+        //n.setCor('R');
         return filhoPromovido;
     }
 
@@ -97,8 +100,8 @@ public class ArvoreRN extends ABP {
         }
         filhoPromovido.setEsquerdo(n); //Atualiza o filho esquerdo do sucessor para n
         //Recolore os nós
-        filhoPromovido.setCor('N');
-        n.setCor('R');
+        //filhoPromovido.setCor('N');
+        //n.setCor('R');
         return filhoPromovido;
     }
 
@@ -137,9 +140,11 @@ public class ArvoreRN extends ABP {
                     substituirNo(null, n, null); // Árvore fica vazia
                     tamanho--;
                 } else if (n.getCor() == 'R') { // Nó rubro
+                    System.out.println("Removendo nó rubro folha");
                     substituirNo(pai, n, null);
                     tamanho--;
                 } else if (n.getCor() == 'N') { // Nó negro
+                    System.out.println("Removendo nó negro folha");
                     boolean ehEsquerdo = (pai.getEsquerdo() == n);
                     substituirNo(pai, n, null);
                     tamanho--;
@@ -207,10 +212,23 @@ public class ArvoreRN extends ABP {
                 ? (irmao != null ? irmao.getDireito() : null)
                 : (irmao != null ? irmao.getEsquerdo() : null);
 
+        System.out.println(pai.getChave()); 
+        
+        if (irmao != null) {
+            System.out.println(irmao.getChave()); 
+        }
+        if (sobrinhoInterno != null) {
+            System.out.println(sobrinhoInterno.getChave()); 
+        }
+        if (sobrinhoExterno != null) {
+            System.out.println(sobrinhoExterno.getChave()); 
+        }
+
         // Caso 1: irmão rubro e pai negro -> rotação no pai, pinta pai de rubro e irmão de negro, depois reavalia
         if (irmao != null && isRed(irmao)){
             irmao.setCor('N');
             pai.setCor('R');
+            System.out.println("Caso 1: Irmão rubro e pai negro");
             if (ehEsquerdo) {
                 rotacaoEsquerda(pai);
             } else { // caso espelhado
@@ -220,7 +238,8 @@ public class ArvoreRN extends ABP {
         }
 
         // Caso 2: irmão negro com sobrinhos negros -> pinta irmão de rubro e checa o pai
-        if (isBlack(irmao) && isBlack(sobrinhoInterno) && isBlack(sobrinhoExterno)) {
+        else if (isBlack(irmao) && isBlack(sobrinhoInterno) && isBlack(sobrinhoExterno)) {
+            System.out.println("Caso 2: Irmão negro com sobrinhos negros");
             if (irmao != null) {
                 irmao.setCor('R');
             }
@@ -232,10 +251,12 @@ public class ArvoreRN extends ABP {
             } else {
                 // Caso 2b: pai rubro -> resolve localmente e pinta pai de negro (caso terminal)
                 pai.setCor('N');
+                return; 
             }
         }
         // Caso 3: irmão negro com sobrinho esquerdo é rubro e sobrinho direito é negro -> rotação à direita no irmão e recoloração do irmão para rubro e sobrinho esquerdo para negro
-        if (isBlack(irmao) && isRed(sobrinhoInterno) && isBlack(sobrinhoExterno)) {
+        else if (isBlack(irmao) && isRed(sobrinhoInterno) && isBlack(sobrinhoExterno)) {
+            System.out.println("Caso 3: Rotação à direita no irmão");
             if (sobrinhoInterno != null) {
                 sobrinhoInterno.setCor('N');
             }
@@ -250,19 +271,31 @@ public class ArvoreRN extends ABP {
             checarDuploNegro(pai, ehEsquerdo);
         }
         // Caso 4: irmão negro com sobrinho direito rubro -> rotação no pai para esquerda e troca de cores entre pai e irmão (caso terminal)
-        if (isBlack(irmao) && isBlack(sobrinhoInterno) && isRed(sobrinhoExterno)) {
+        else if (isBlack(irmao) && isBlack(sobrinhoInterno) && isRed(sobrinhoExterno)) {
+            System.out.println("Caso 4: Irmão negro com sobrinho direito rubro");
+            System.out.println(pai.getChave()); 
+            
+            if (irmao != null) {
+                System.out.println(irmao.getChave()); 
+            }
+            if (sobrinhoInterno != null) {
+                System.out.println(sobrinhoInterno.getChave()); 
+            }
+            if (sobrinhoExterno != null) {
+                System.out.println(sobrinhoExterno.getChave()); 
+            }
             if (irmao != null) {
                 irmao.setCor(pai.getCor());
-            }
-            if (ehEsquerdo) {
-                rotacaoEsquerda(pai);
-            } else {
-                rotacaoDireita(pai);
+                if (ehEsquerdo) {
+                    rotacaoEsquerda(pai);
+                } else {
+                    rotacaoDireita(pai);
+                }
             }
             pai.setCor('N');
             if (sobrinhoExterno != null) {
                 sobrinhoExterno.setCor('N');
-            }
+            }                    
         }
     }
     @Override
