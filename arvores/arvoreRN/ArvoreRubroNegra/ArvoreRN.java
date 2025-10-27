@@ -74,9 +74,6 @@ public class ArvoreRN extends ABP {
             filhoPromovido.getDireito().setPai(n); //Atualiza o pai do filho direito do sucessor para n
         }
         filhoPromovido.setDireito(n); //Atualiza o filho direito do sucessor para n
-        //Recolore os nós
-        //filhoPromovido.setCor('N');
-        //n.setCor('R');
         return filhoPromovido;
     }
 
@@ -99,9 +96,6 @@ public class ArvoreRN extends ABP {
             filhoPromovido.getEsquerdo().setPai(n); //Atualiza o pai do filho esquerdo do sucessor para n
         }
         filhoPromovido.setEsquerdo(n); //Atualiza o filho esquerdo do sucessor para n
-        //Recolore os nós
-        //filhoPromovido.setCor('N');
-        //n.setCor('R');
         return filhoPromovido;
     }
 
@@ -185,22 +179,39 @@ public class ArvoreRN extends ABP {
     private void removerPaiComDoisFilhos(No n) {
         No sucessor = sucessor(n.getDireito());
         No paiSucessor = sucessor.getPai();
+        No pai = n.getPai();
 
         boolean ehEsquerdo = (sucessor == paiSucessor.getEsquerdo());
 
         if (n.getCor() == 'R' && sucessor.getCor() == 'R'){ // 1: Ambos os nós são rubros
-            removerRN(sucessor.getChave());
-        }else if (n.getCor() == 'N' && sucessor.getCor() == 'R') { // 2: n é negro e sucessor é rubro
+            substituirNo(pai, n, sucessor);
+        } else if (n.getCor() == 'N' && sucessor.getCor() == 'R') { // 2: n é negro e sucessor é rubro
             sucessor.setCor('N');
-            removerRN(sucessor.getChave());
+            substituirNo(pai, n, sucessor);
         } else if (n.getCor() == 'N' && sucessor.getCor() == 'N') { // 3: Ambos os nós são negros
-            removerRN(sucessor.getChave());
+            substituirNo(pai, n, sucessor);
             checarDuploNegro(paiSucessor, ehEsquerdo);
         } else if (n.getCor() == 'R' && sucessor.getCor() == 'N') { // 4: n é rubro e sucessor é negro
             sucessor.setCor('R');
-            removerRN(sucessor.getChave());
+            substituirNo(pai, n, sucessor);
             checarDuploNegro(paiSucessor, ehEsquerdo);
         }
+        if (paiSucessor != n){ // Se o pai do sucessor não for n, o sucessor não é o filho direto
+            substituirNo(paiSucessor, sucessor, sucessor.getDireito()); //seta o filho direito do sucessor como o filho direito do nó pai do sucessor
+            if (sucessor.getDireito() != null) {
+                sucessor.getDireito().setPai(paiSucessor);
+            }
+            sucessor.setDireito(n.getDireito()); //Atualiza o filho direito do sucessor
+            if (n.getDireito() != null) {
+                n.getDireito().setPai(sucessor);
+            }
+        }
+        sucessor.setEsquerdo(n.getEsquerdo()); //Atualiza o filho esquerdo do sucessor
+        if (n.getEsquerdo() != null) {
+            n.getEsquerdo().setPai(sucessor);
+        }
+        sucessor.setCor(n.getCor()); //Sucessor assume a cor do nó removido
+        tamanho--;
     }
     
     private void checarDuploNegro(No pai, boolean ehEsquerdo) {
@@ -250,8 +261,7 @@ public class ArvoreRN extends ABP {
                 }
             } else {
                 // Caso 2b: pai rubro -> resolve localmente e pinta pai de negro (caso terminal)
-                pai.setCor('N');
-                return; 
+                pai.setCor('N'); 
             }
         }
         // Caso 3: irmão negro com sobrinho esquerdo é rubro e sobrinho direito é negro -> rotação à direita no irmão e recoloração do irmão para rubro e sobrinho esquerdo para negro
