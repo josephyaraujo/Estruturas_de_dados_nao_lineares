@@ -23,10 +23,16 @@ public class ArvoreRN extends ABP {
                 if (tio != null && tio.getCor() == 'R') { //Caso 1: tio é rubro
                     repintamento(pai, tio, avo);
                 } else { // Caso 2 e 3: tio é negro
-                    rotacoesRN(n, pai, avo);
-                    // Recolore pai e avô após rotações
-                    pai.setCor('N');
-                    avo.setCor('R');
+                    No promovido = rotacoesRN(n, pai, avo);
+                    if (promovido != null) {
+                        promovido.setCor('N'); //após as rotações o nó promovido se torna tipo um novo nó raiz da subárvore
+                        if (hasLeft(promovido)) {   
+                            promovido.getEsquerdo().setCor('R');
+                        }
+                        if (hasRight(promovido)) {   
+                            promovido.getDireito().setCor('R');
+                        }
+                    }
                 }
             }
         }
@@ -41,18 +47,19 @@ public class ArvoreRN extends ABP {
         balancearRN(avo); //Verifica se o avô precisa de balanceamento
     }
 
-    public void rotacoesRN(No n, No pai, No avo) {
+    public No rotacoesRN(No n, No pai, No avo) { //retorna o nó promovido para ser rebalançeado
         if (pai == avo.getEsquerdo() && n == pai.getEsquerdo()) { //pai e n são filhos esquerdos
-            rotacaoDireita(avo);
+            return rotacaoDireita(avo);
         } else if (pai == avo.getEsquerdo() && n == pai.getDireito()) { //pai é filho esquerdo e n é filho direito
             rotacaoEsquerda(pai);
-            rotacaoDireita(avo);
+            return rotacaoDireita(avo);
         } else if (pai == avo.getDireito() && n == pai.getDireito()) { //pai e n são filhos direitos
-            rotacaoEsquerda(avo);
+            return rotacaoEsquerda(avo);
         } else if (pai == avo.getDireito() && n == pai.getEsquerdo()) { //pai é filho direito e n é filho esquerdo
             rotacaoDireita(pai);
-            rotacaoEsquerda(avo);
+            return rotacaoEsquerda(avo);
         }
+        return null;
     }
 
     public No rotacaoDireita (No n) {
@@ -341,8 +348,7 @@ protected void montar(Object[][] matriz, No n, int linha, int coluna,
         return;
     }
 
-    // Adaptar para usar caracteres como cores em vez de booleanos
-    String corTexto = (n.getCor() == 'r' || n.getCor() == 'R') ? VERMELHO : PRETO;
+    String corTexto = (n.getCor() == 'R') ? VERMELHO : PRETO;
 
     matriz[linha][coluna] = corTexto + n.getChave() + RESET;
 
