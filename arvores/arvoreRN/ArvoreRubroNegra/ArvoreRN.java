@@ -141,11 +141,11 @@ public class ArvoreRN extends ABP {
                     substituirNo(null, n, null); // Árvore fica vazia
                     tamanho--;
                 } else if (n.getCor() == 'R') { // Nó rubro
-                    System.out.println("Removendo nó rubro folha");
+                    System.out.println("Removendo nó rubro folha: " + n.getChave());
                     substituirNo(pai, n, null);
                     tamanho--;
                 } else if (n.getCor() == 'N') { // Nó negro
-                    System.out.println("Removendo nó negro folha");
+                    System.out.println("Removendo nó negro folha: " + n.getChave());
                     boolean ehEsquerdo = (pai.getEsquerdo() == n);
                     substituirNo(pai, n, null);
                     tamanho--;
@@ -273,7 +273,7 @@ public class ArvoreRN extends ABP {
         }
         // Caso 3: irmão negro com sobrinho esquerdo é rubro e sobrinho direito é negro -> rotação à direita no irmão e recoloração do irmão para rubro e sobrinho esquerdo para negro
         else if (isBlack(irmao) && isRed(sobrinhoInterno) && isBlack(sobrinhoExterno)) {
-            System.out.println("Caso 3: Rotação à direita no irmão");
+            System.out.println("Caso 3: irmão negro com sobrinho esquerdo rubro e sobrinho direito negro");
             if (sobrinhoInterno != null) {
                 sobrinhoInterno.setCor('N');
             }
