@@ -1,11 +1,8 @@
 package arvores.arvoreAVL;
 import arvores.arvoreBP.ABP;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
 
-public class AVL2 extends ABP implements ArvoreAVL {
+
+public class AVL2 extends ABP { //implements ArvoreAVL
     AVLNo raiz;
     int tamanho;
 
@@ -14,7 +11,6 @@ public class AVL2 extends ABP implements ArvoreAVL {
         raiz = new AVLNo(null, o, 0);
     }
 
-    @Override
     public AVLNo rotacao(AVLNo desbalanceado, AVLNo filho) {
         if (desbalanceado == null || filho == null) {
             throw new RuntimeException("O nó desbalanceado e o filho não podem ser nulos para a rotação.");
@@ -39,7 +35,6 @@ public class AVL2 extends ABP implements ArvoreAVL {
     return null; // Retorna null se não houver desbalanceamento
     }
 
-    @Override
     public void altFBinsercao(AVLNo n) {
         AVLNo atual = n;
         while (atual != null) {
@@ -64,7 +59,6 @@ public class AVL2 extends ABP implements ArvoreAVL {
         }
     }
 
-    @Override
     public void altFBremocao(AVLNo n) {
         AVLNo atual = n;
         while (atual != null) {
@@ -90,7 +84,6 @@ public class AVL2 extends ABP implements ArvoreAVL {
         }
     }
     // Implementação da rotação simples à direita
-    @Override
     public AVLNo rotacaoSimplesDireita(AVLNo pai, AVLNo atual) {
         AVLNo avo = (AVLNo) pai.getPai();
         AVLNo netoDireito = (AVLNo) atual.getFilhoDireito();
@@ -115,17 +108,16 @@ public class AVL2 extends ABP implements ArvoreAVL {
         atual.setFilhoDireito(pai);
         pai.setPai(atual);
 
-        // Recalcula fatores localmente a partir das alturas (consistente com formataNosRecursivo)
-        int fbPai = altura((AVLNo) pai.getFilhoEsquerdo()) - altura((AVLNo) pai.getFilhoDireito());
-        int fbAtual = altura((AVLNo) atual.getFilhoEsquerdo()) - altura((AVLNo) atual.getFilhoDireito());
-        pai.setFB(fbPai);
-        atual.setFB(fbAtual);
+        // Atualiza os fatores de balanceamento
+        int fb_pai = pai.getFB() - 1 - Math.max(atual.getFB(), 0);
+        int fb_atual = atual.getFB() - 1 + Math.min(fb_pai, 0);
+        atual.setFB(fb_atual);
+        pai.setFB(fb_pai);
 
         return atual; // Retorna o novo nó raiz após a rotação
     }
 
     // Implementação da rotação simples à esquerda
-    @Override
     public AVLNo rotacaoSimplesEsquerda(AVLNo pai, AVLNo atual) {
         AVLNo avo = (AVLNo) pai.getPai();
         AVLNo netoEsquerdo = (AVLNo) atual.getFilhoEsquerdo();
@@ -150,11 +142,11 @@ public class AVL2 extends ABP implements ArvoreAVL {
         atual.setFilhoEsquerdo(pai);
         pai.setPai(atual);
 
-        // Recalcula fatores localmente a partir das alturas (consistente com formataNosRecursivo)
-        int fbPai = altura((AVLNo) pai.getFilhoEsquerdo()) - altura((AVLNo) pai.getFilhoDireito());
-        int fbAtual = altura((AVLNo) atual.getFilhoEsquerdo()) - altura((AVLNo) atual.getFilhoDireito());
-        pai.setFB(fbPai);
-        atual.setFB(fbAtual);
+        // Atualiza os fatores de balanceamento
+        int fb_pai = pai.getFB() + 1 - Math.min(atual.getFB(), 0); 
+        int fb_atual = atual.getFB() + 1 + Math.max(fb_pai, 0);
+        atual.setFB(fb_atual);
+        pai.setFB(fb_pai);
 
         return atual; // Retorna o novo nó raiz após a rotação
     }
@@ -285,75 +277,53 @@ public class AVL2 extends ABP implements ArvoreAVL {
             return buscar((AVLNo) n.getFilhoDireito(), o);
         }
     }
-    //Métodos auxiliares para impressão da árvore com fatores de balanceamento
-    public void formataNos() {
-        formataNosRecursivo(raiz);
-    }
-
-    private int formataNosRecursivo(AVLNo no) {
-        if (no == null) return 0;
-
-        int alturaEsq = formataNosRecursivo((AVLNo) no.getFilhoEsquerdo());
-        int alturaDir = formataNosRecursivo((AVLNo) no.getFilhoDireito());
-
-        no.setFB(alturaEsq - alturaDir);
-        return Math.max(alturaEsq, alturaDir) + 1;
-    }
+    //Imprime a árvore formatada em uma matriz, centralizando a raiz.
     public void printArvoreComFB() {
-        if (raiz == null) {
-            System.out.println("(árvore vazia)");
-            return;
-        }
+        int altura = altura(raiz); 
+        int linhas = altura + 1;
+        int colunas = (int) Math.pow(2, linhas) - 1;  // número total de posições (2^linhas) - 1
 
-        // Formata os nós para garantir que os nós estão corretos
-        //formataNos();
+        String[][] matriz = new String[linhas][colunas];
 
-        int altura = altura(raiz);
-        List<List<String>> levels = new ArrayList<>();
-        Queue<AVLNo> queue = new LinkedList<>();
-        queue.add(raiz);
-        
-        // Coleta todos os nós por nível
-        for (int i = 0; i <= altura; i++) {
-            List<String> level = new ArrayList<>();
-            int levelSize = queue.size();
-            
-            for (int j = 0; j < levelSize; j++) {
-                AVLNo node = queue.poll();
-                if (node != null) {
-                    level.add(String.format("%2d[%d]", node.getValor(), node.getFB()));
-                    queue.add((AVLNo) node.getFilhoEsquerdo());
-                    queue.add((AVLNo) node.getFilhoDireito());
+        montar(matriz, raiz, 0, colunas / 2); // raiz começa no meio da matriz (colunas/2)
+
+        for (int i = 0; i < linhas; i++) {
+            for (int j = 0; j < colunas; j++) {
+                if (matriz[i][j] == null) {
+                    System.out.print("     ");
                 } else {
-                    level.add("      ");
-                    queue.add(null);
-                    queue.add(null);
-                }
-            }
-            levels.add(level);
-        }
-        
-        // Imprime os níveis formatados
-        for (int i = 0; i < levels.size(); i++) {
-            List<String> level = levels.get(i);
-            int spacesBefore = (int) Math.pow(2, (altura - i)) - 1;
-            int spacesBetween = (int) Math.pow(2, (altura - i + 1)) - 1;
-            
-            // Espaços antes do primeiro nó
-            for (int s = 0; s < spacesBefore; s++) {
-                System.out.print("      ");
-            }
-            
-            // Imprime os nós
-            for (int j = 0; j < level.size(); j++) {
-                System.out.print(level.get(j));
-                if (j < level.size() - 1) {
-                    for (int s = 0; s < spacesBetween; s++) {
-                        System.out.print("      ");
-                    }
+                    System.out.printf("%5s", matriz[i][j]);
                 }
             }
             System.out.println();
+        }
+    }
+
+    //Monta recursivamente a matriz com os nós e seus fatores de balanceamento.
+
+    protected void montar(String[][] matriz, AVLNo n, int linha, int coluna) {
+        if (n == null) { // não tem nada mais 
+            return;
+        }
+
+        // proteções contra índices fora do limite
+        if (linha < 0 || linha >= matriz.length || coluna < 0 || coluna >= matriz[0].length) {
+            return;
+        }
+
+        matriz[linha][coluna] = n.getValor() + "[" + n.getFB() + "]"; // coloca o nó na matriz com o fb
+
+        // quanto mais desce, mais distante ficam as posições (d >= 1)
+        int exp = matriz.length - linha - 2;
+        int d = exp >= 0 ? (int) Math.pow(2, exp) : 1;
+        if (d < 1) d = 1;
+
+        if (n.getFilhoEsquerdo() != null) {
+            montar(matriz, (AVLNo) n.getFilhoEsquerdo(), linha + 1, coluna - d);
+        }
+
+        if (n.getFilhoDireito() != null) {
+            montar(matriz, (AVLNo) n.getFilhoDireito(), linha + 1, coluna + d);
         }
     }
 }

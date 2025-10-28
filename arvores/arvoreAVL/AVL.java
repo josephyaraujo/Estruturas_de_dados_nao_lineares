@@ -1,9 +1,5 @@
 package arvores.arvoreAVL;
 import arvores.arvoreBP.ABP;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
 
 public class AVL extends ABP implements ArvoreAVL {
     AVLNo raiz;
@@ -160,13 +156,7 @@ public class AVL extends ABP implements ArvoreAVL {
 
     @Override
     public void inserir(Object o) {
-        if (raiz == null) {
-            raiz = new AVLNo(null, o, 0);
-            tamanho = 1;
-            return;
-        }
-
-        AVLNo pai = buscar(raiz, o);
+        AVLNo pai = treeSearch(raiz, o);
         // Se o nó retornado for igual ao valor a ser inserido, lança exceção
         if (pai.getValor().equals(o)) {
             throw new RuntimeException("O valor já existe na árvore");
@@ -187,23 +177,24 @@ public class AVL extends ABP implements ArvoreAVL {
 
     @Override
     public Object remover(Object o) {
-        AVLNo no = (AVLNo) buscar(raiz, o);
+        AVLNo no = (AVLNo) treeSearch(raiz, o);
+        Object removido = no.getChave(); 
         AVLNo noParaBalancear; // Nó pai para iniciar o balanceamento
         if (no == null) {
             throw new RuntimeException("O valor não foi encontrado na árvore");
         }
         else if (no.getFilhoEsquerdo() == null && no.getFilhoDireito() == null) { // Nó folha
-            if (no.getPai() == null) {
+            noParaBalancear = (AVLNo) no.getPai();
+            if (noParaBalancear() == null) {
                 raiz = null; // A árvore ficará vazia
             } else {
-                noParaBalancear = (AVLNo) no.getPai();
                 if (no == noParaBalancear.getFilhoEsquerdo()) { //se o nó for filho esquerdo do pai
                     noParaBalancear.setFilhoEsquerdo(null);
-                    noParaBalancear.setFB(noParaBalancear.getFB()-1); // Atualiza o fator de balanceamento
+                    noParaBalancear.setFB(noParaBalancear.getFB() - 1); // Atualiza o fator de balanceamento
                     altFBremocao(noParaBalancear);
                 } else { //se o nó for filho direito do pai
                     noParaBalancear.setFilhoDireito(null);
-                    noParaBalancear.setFB(noParaBalancear.getFB()+1); // Atualiza o fator de balanceamento
+                    noParaBalancear.setFB(noParaBalancear.getFB() + 1); // Atualiza o fator de balanceamento
                     altFBremocao(noParaBalancear);
                 }
             }
@@ -212,30 +203,28 @@ public class AVL extends ABP implements ArvoreAVL {
             noParaBalancear = (AVLNo) no.getPai();
 
             if (noParaBalancear == null) { // Se o nó a ser removido for a raiz
+                raiz = filho;
                 filho.setPai(null);
             } else {
                 if (no == noParaBalancear.getFilhoEsquerdo()) {
                     noParaBalancear.setFilhoEsquerdo(filho);
-                    noParaBalancear.setFB(noParaBalancear.getFB()-1); // Atualiza o fator de balanceamento
+                    noParaBalancear.setFB(noParaBalancear.getFB() - 1); // Atualiza o fator de balanceamento
                     altFBremocao(noParaBalancear);
                 } else {
                     noParaBalancear.setFilhoDireito(filho);
-                    noParaBalancear.setFB(noParaBalancear.getFB()+1); // Atualiza o fator de balanceamento
+                    noParaBalancear.setFB(noParaBalancear.getFB() + 1); // Atualiza o fator de balanceamento
                     altFBremocao(noParaBalancear);
                 }
                 filho.setPai(noParaBalancear);
             }
         } else { // Nó com dois filhos
-            AVLNo sucessor = (AVLNo) no.getFilhoDireito();
-            while (sucessor.getFilhoEsquerdo() != null) {
-                sucessor = (AVLNo) sucessor.getFilhoEsquerdo();
-            }
+            AVLNo sucessor = (AVLNo) sucessor(no.getFilhoDireito());
             Object substituto = sucessor.getValor();
             remover(sucessor.getValor());
             no.setValor(substituto);
         }
         tamanho--;
-        return o; // Retorna após a remoção do sucessor
+        return removido; // Retorna após a remoção do sucessor
     }
 
     public AVLNo filhoEsquerdo(AVLNo node) {
@@ -266,94 +255,54 @@ public class AVL extends ABP implements ArvoreAVL {
             return 1 + Math.max(this.altura((AVLNo) node.getFilhoEsquerdo()), this.altura((AVLNo) node.getFilhoDireito()));
         }
     }
-    public AVLNo buscar (AVLNo n, Object o) {
-        if (n == null) {
-            return null;
-        }
-        if ((int) n.getValor() == (int) o) {
-            return n;
 
-        } else if ((int) o < (int) n.getValor()) {
-            if (n.getFilhoEsquerdo() == null) {
-                return n; // Retorna o nó pai para inserção
-            }
-            return buscar((AVLNo) n.getFilhoEsquerdo(), o);
-        } else {
-            if (n.getFilhoDireito() == null) {
-                return n; // Retorna o nó pai para inserção
-            }
-            return buscar((AVLNo) n.getFilhoDireito(), o);
-        }
-    }
-    //Métodos auxiliares para impressão da árvore com fatores de balanceamento
-    public void formataNos() {
-        formataNosRecursivo(raiz);
-    }
-
-    private int formataNosRecursivo(AVLNo no) {
-        if (no == null) return 0;
-
-        int alturaEsq = formataNosRecursivo((AVLNo) no.getFilhoEsquerdo());
-        int alturaDir = formataNosRecursivo((AVLNo) no.getFilhoDireito());
-
-        no.setFB(alturaEsq - alturaDir);
-        return Math.max(alturaEsq, alturaDir) + 1;
-    }
+    //Imprime a árvore formatada em uma matriz, centralizando a raiz.
     public void printArvoreComFB() {
-        if (raiz == null) {
-            System.out.println("(árvore vazia)");
-            return;
-        }
+        int altura = altura(raiz); 
+        int linhas = altura + 1;
+        int colunas = (int) Math.pow(2, linhas) - 1;  // número total de posições (2^linhas) - 1
 
-        // Formata os nós para garantir que os nós estão corretos
-        formataNos();
+        String[][] matriz = new String[linhas][colunas];
 
-        int altura = altura(raiz);
-        List<List<String>> levels = new ArrayList<>();
-        Queue<AVLNo> queue = new LinkedList<>();
-        queue.add(raiz);
-        
-        // Coleta todos os nós por nível
-        for (int i = 0; i <= altura; i++) {
-            List<String> level = new ArrayList<>();
-            int levelSize = queue.size();
-            
-            for (int j = 0; j < levelSize; j++) {
-                AVLNo node = queue.poll();
-                if (node != null) {
-                    level.add(String.format("%2d[%d]", node.getValor(), node.getFB()));
-                    queue.add((AVLNo) node.getFilhoEsquerdo());
-                    queue.add((AVLNo) node.getFilhoDireito());
+        montar(matriz, raiz, 0, colunas / 2); // raiz começa no meio da matriz (colunas/2)
+
+        for (int i = 0; i < linhas; i++) {
+            for (int j = 0; j < colunas; j++) {
+                if (matriz[i][j] == null) {
+                    System.out.print("     ");
                 } else {
-                    level.add("      ");
-                    queue.add(null);
-                    queue.add(null);
-                }
-            }
-            levels.add(level);
-        }
-        
-        // Imprime os níveis formatados
-        for (int i = 0; i < levels.size(); i++) {
-            List<String> level = levels.get(i);
-            int spacesBefore = (int) Math.pow(2, (altura - i)) - 1;
-            int spacesBetween = (int) Math.pow(2, (altura - i + 1)) - 1;
-            
-            // Espaços antes do primeiro nó
-            for (int s = 0; s < spacesBefore; s++) {
-                System.out.print("      ");
-            }
-            
-            // Imprime os nós
-            for (int j = 0; j < level.size(); j++) {
-                System.out.print(level.get(j));
-                if (j < level.size() - 1) {
-                    for (int s = 0; s < spacesBetween; s++) {
-                        System.out.print("      ");
-                    }
+                    System.out.printf("%5s", matriz[i][j]);
                 }
             }
             System.out.println();
+        }
+    }
+
+    //Monta recursivamente a matriz com os nós e seus fatores de balanceamento.
+
+    protected void montar(String[][] matriz, AVLNo n, int linha, int coluna) {
+        if (n == null) { // não tem nada mais 
+            return;
+        }
+
+        // proteções contra índices fora do limite
+        if (linha < 0 || linha >= matriz.length || coluna < 0 || coluna >= matriz[0].length) {
+            return;
+        }
+
+        matriz[linha][coluna] = n.getValor() + "[" + n.getFB() + "]"; // coloca o nó na matriz com o fb
+
+        // quanto mais desce, mais distante ficam as posições (d >= 1)
+        int exp = matriz.length - linha - 2;
+        int d = exp >= 0 ? (int) Math.pow(2, exp) : 1;
+        if (d < 1) d = 1;
+
+        if (n.getFilhoEsquerdo() != null) {
+            montar(matriz, (AVLNo) n.getFilhoEsquerdo(), linha + 1, coluna - d);
+        }
+
+        if (n.getFilhoDireito() != null) {
+            montar(matriz, (AVLNo) n.getFilhoDireito(), linha + 1, coluna + d);
         }
     }
 }

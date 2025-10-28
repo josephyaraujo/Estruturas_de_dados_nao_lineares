@@ -1,299 +1,274 @@
-package arvores.arvoreBP;
+package arvores.arvoreBP; 
 
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class ABP implements ArvoreBinariaPesquisa {
-    No root;
-    int size;
+public class ABP {
+    No raiz;
+    int tamanho;
 
-    public ABP(Object o) {
-        root = new No (null, o);
-        size = 1;
+    public ABP (Object o) {
+        raiz = new No(null, o);
+        tamanho = 1;
     }
 
-    @Override
-    public int tamanho() {
-        return size;
+    public int size(){
+        return tamanho;
     }
 
-    @Override
-    public int altura(No n) {
-        if (n == null || ehExterno(n)){
+    public int height(No n) {
+        if (n == null || isExternal(n)){
             return 0;
         } else {
-            int alturaEsquerda = this.altura(n.getFilhoEsquerdo());
-            int alturaDireita = this.altura(n.getFilhoDireito());
-            return 1 + Math.max(alturaEsquerda, alturaDireita);
+            int hEsquerda = this.height(n.getEsquerdo());
+            int hDireito = this.height(n.getDireito());
+            
+            return 1 + Math.max(hEsquerda, hDireito);
         }
     }
 
-    @Override
-    public boolean ehVazia() {
-        return this.size == 0;
+    public int depth(No n){
+        if (isRoot(n)){
+            return 0;
+        } else {
+            return 1 + this.depth(n.getPai());
+        }
     }
 
-    @Override
-    public Iterator<Object> elementos() {
+    public boolean isEmpty(){
+        return this.tamanho == 0;
+    }
+
+    public Iterator<No> children(No n){
+        ArrayList<No> a = new ArrayList<>();
+
+        if (n.getDireito() != null) {
+            a.add(n.getDireito());
+        }
+
+        if (n.getEsquerdo() != null) {
+            a.add(n.getEsquerdo());
+        }
+
+        return a.iterator();
+    }
+
+    public Iterator<Object> elements() {
         ArrayList<Object> elemns = new ArrayList<>();
-        element(raiz(), elemns);
+        element(root(), elemns);
         return elemns.iterator();
     }
 
     public void element(No n, ArrayList<Object> e){
-        e.add(n.getValor());
-        Iterator<No> eIterator = filhos(n);
-        while (eIterator.hasNext()){
+        e.add(n.getChave());
+        Iterator<No> eIterator = children(n);
+        while (eIterator.hasNext()) {
             element(eIterator.next(), e);
         }
     }
 
-    @Override
-    public Iterator<No> nos() {
+    public Iterator<No> nos(){
         ArrayList<No> nos = new ArrayList<>();
-        no(raiz(), nos);
+        no(root(), nos);
         return nos.iterator();
     }
 
-    public void no(No n, ArrayList<No> noArrayList){
-        noArrayList.add(n);
+    public void no(No n, ArrayList<No> noArray){
+        noArray.add(n);
 
-        Iterator<No> noIterator = filhos(n);
+        Iterator<No> noIterator = children(n);
         while (noIterator.hasNext()){
-            no(noIterator.next(), noArrayList);
+            no(noIterator.next(), noArray);
         }
     }
 
-    @Override
-    public No raiz() {
-        return root;
+    public No root(){
+        return raiz;
     }
 
-    @Override
-    public No pai(No n) {
-        return n.getPai();
+    public boolean hasLeft(No n){
+        return n.getEsquerdo() != null;
     }
 
-    @Override
-    public Iterator<No> filhos(No n) {
-        ArrayList<No> a = new ArrayList<>();
-
-        if (n.getFilhoEsquerdo() != null){
-            a.add(n.getFilhoEsquerdo());
-        }
-        if (n.getFilhoDireito() != null){
-            a.add(n.getFilhoDireito());
-        }
-        
-        return a.iterator();
+    public boolean hasRight(No n){
+        return n.getDireito() != null;
     }
 
-    @Override
-    public boolean ehInterno(No n) {
-        return temFilhoEsquerdo(n) || temFilhoDireito(n);
+    public boolean isInternal(No n){
+        return hasLeft(n) || hasRight(n);
     }
 
-    @Override
-    public boolean ehExterno(No n) {
-        return !ehInterno(n);
+    public boolean isExternal(No n){
+        return !isInternal(n);
     }
 
-    @Override
-    public boolean ehRaiz(No n) {
-        return n == root;
+    public boolean isRoot(No n){
+        return n == raiz;
     }
 
-    @Override
-    public int profundidade(No n) {
-        if (n == null || ehRaiz(n)){
-            return 0;
-        } else {
-            return 1 + profundidade(n.getPai());
-        }
-    }
-
-    @Override
-    public void inserir(Object o) {
-        No parent = buscar(raiz(), o);
-        No newNode = new No(parent, o);
-        
-        if ((int) o < (int) parent.getValor()){ 
-            parent.setFilhoEsquerdo(newNode);
-            newNode.setPai(parent);
-        } else {
-            parent.setFilhoDireito(newNode);
-            newNode.setPai(parent);
-        }
-        size++;
-    }
-
-    @Override
-    public Object remover(Object o) {
-        No nodeToRemove = buscar(raiz(), o);
-
-        // Caso 0: Nó não encontrado
-        if (nodeToRemove == null) {
-            throw new RuntimeException("Nó não encontrado na árvore.");
-        }
-        // Caso 1: Nó é uma folha (sem filhos)
-        if (ehExterno(nodeToRemove)){
-            if (ehRaiz(nodeToRemove)){
-                root = null; // Árvore fica vazia    
-            } else {
-                No parent = nodeToRemove.getPai();
-                if (parent != null) {
-                    if (parent.getFilhoEsquerdo() == nodeToRemove){
-                        parent.setFilhoEsquerdo(null);
-                    } else {
-                        parent.setFilhoDireito(null);
-                    }
-                }
-            }
-        }
-        // Caso 2: Nó tem um filho
-        else if (temFilhoEsquerdo(nodeToRemove) ^ temFilhoDireito(nodeToRemove)){
-            No child = temFilhoEsquerdo(nodeToRemove) ? nodeToRemove.getFilhoEsquerdo() : nodeToRemove.getFilhoDireito();
-            if (ehRaiz(nodeToRemove)){
-                root = child;
-                child.setPai(null);
-            } 
-            else {
-                No parent = nodeToRemove.getPai();
-                if (parent.getFilhoEsquerdo() == nodeToRemove){
-                    parent.setFilhoEsquerdo(child);
-                } else {
-                    parent.setFilhoDireito(child);
-                }
-                child.setPai(parent);
-            }
-        }
-        // Caso 3: Nó tem dois filhos
-        else {
-            No successor = nodeToRemove.getFilhoDireito();
-            while (temFilhoEsquerdo(successor)){
-                successor = successor.getFilhoEsquerdo();
-            }
-            Object noSubstituto = successor.getValor();
-            remover(noSubstituto); // Remove o no successor do lugar de origem
-            nodeToRemove.setValor(noSubstituto); // Substitui o valor do no a ser removido pelo valor do successor
-        }
-
-        size--;
-        return o;
-    }
-
-    @Override
-    public void preOrdem(No n) { // Raiz, Esquerda, Direita
-        if (n != null){
-            System.out.print(n.getValor() + " ");
-            preOrdem(n.getFilhoEsquerdo());
-            preOrdem(n.getFilhoDireito());
-        }
-    }
-
-    @Override
-    public void emOrdem(No n) { // Esquerda, Raiz, Direita
-        if (n != null){
-            emOrdem(n.getFilhoEsquerdo());
-            System.out.print(n.getValor() + " ");
-            emOrdem(n.getFilhoDireito());
-        }
-    }
-
-    @Override
-    public void posOrdem(No n) { // Esquerda, Direita, Raiz
-        if (n != null){
-            posOrdem(n.getFilhoEsquerdo());
-            posOrdem(n.getFilhoDireito());
-            System.out.print(n.getValor() + " ");
-        }
-    }
-
-    @Override
-    public No filhoEsquerdo(No n) {
-        return n.getFilhoEsquerdo();
-    }
-
-    @Override
-    public No filhoDireito(No n) {
-        return n.getFilhoDireito();
-    }
-
-    @Override
-    public boolean temFilhoEsquerdo(No n) {
-        return filhoEsquerdo(n) != null;
-    }
-
-    @Override
-    public boolean temFilhoDireito(No n) {
-        return filhoDireito(n) != null;
-    }
-
-    @Override
-    public No buscar(No n, Object o) {
-        if (n == null){
+    public No treeSearch(No n, Object chave){
+        if (n == null) {
             return null;
         }
-        if ((int) o < (int) n.getValor()){
-            if (n.getFilhoEsquerdo() == null){
+        //Procura no lado esquerdo
+        if ((int) chave < (int) n.getChave()) {
+            if (n.getEsquerdo() == null) {
                 return n;
             }
-            return buscar(n.getFilhoEsquerdo(), o);
-        }
-        else if (n.getValor().equals(o)){
+            return treeSearch(n.getEsquerdo(), chave);
+        //Caso seja o mesmo valor encontrado
+        } else if ((int) chave == (int) n.getChave()){
             return n;
-        }
-        else {
-            if (n.getFilhoDireito() == null){
+        } else {
+        //Procura no lado direito
+            if (n.getDireito() == null) {
                 return n;
             }
-            return buscar(n.getFilhoDireito(), o);            
+            return treeSearch(n.getDireito(), chave);
         }
     }
 
-// Método adicional para imprimir a árvore de cima para baixo (nível por nível)
-    public void printArvore() {
-        if (root == null) {
-            System.out.println("(árvore vazia)");
-            return;
+    public No addChild(Object chave){
+        No noPai = treeSearch(raiz, chave);
+        No novoNo = new No(noPai, chave);
+
+        if ((int) noPai.getChave() > (int) chave){
+            noPai.setEsquerdo(novoNo);
+        } else {
+            noPai.setDireito(novoNo);
         }
-        
-        int h = altura(raiz());
-        int niveis = h + 1;
-        
-        for (int nivel = 0; nivel < niveis; nivel++) {
-            // Calcula espaçamento
-            int espacosAntes = (int) Math.pow(2, (h - nivel)) - 1;
-            int espacosEntre = (int) Math.pow(2, (h - nivel + 1)) - 1;
-            
-            // Espaços antes do primeiro nó
-            for (int i = 0; i < espacosAntes; i++) {
-                System.out.print("  ");
+
+        tamanho++;
+        return novoNo;
+    }
+
+    public Object remove(Object chave){
+        No temp = treeSearch(raiz, chave);
+
+        if (temp == null || (int) temp.getChave() != (int) chave){
+            throw new RuntimeException("Chave nao existe");
+        }
+
+        Object remover = temp.getChave();
+
+        if (temp.getDireito() == null && temp.getEsquerdo() == null) { //não tem filhos
+            No pai = temp.getPai();
+            if (pai == null){
+                raiz = null;
+            } else if (pai.getEsquerdo() == temp) {
+                pai.setEsquerdo(null);
+            } else {
+                pai.setDireito(null);
             }
             
-            // Imprime nós do nível atual
-            imprimirNivel(root, nivel, 0, espacosEntre);
+        } else if ((temp.getDireito() == null && temp.getEsquerdo() != null) || (temp.getDireito() != null && temp.getEsquerdo() == null)) { //tem um filho
+            No filho = (hasLeft(temp)) ? temp.getEsquerdo() : temp.getDireito();
+
+            No pai = temp.getPai();
+
+            if (pai == null) { // temp é raiz
+                raiz = filho;
+                filho.setPai(null);
+            } else {
+                if (pai.getEsquerdo() == temp) {
+                    pai.setEsquerdo(filho);
+                } else {
+                    pai.setDireito(filho);
+                }
+                filho.setPai(pai);
+            }
+        } else { //tem dois filhos
+            No substituto = sucessor(temp.getDireito());
+            Object tempChave = substituto.getChave();
+            remove(substituto.getChave());
+            temp.setChave(tempChave);
+        }
+
+        tamanho--;
+        return remover;
+    }
+
+    public No sucessor(No n){
+        while (n.getEsquerdo() != null){
+            n = n.getEsquerdo();
+        }
+
+        return n;
+    }
+
+    public void preOrder(No n){
+        System.out.println(n.getChave());
+
+        if (n.getEsquerdo() != null){
+            preOrder(n.getEsquerdo());
+        }
+
+        if (n.getDireito() != null){
+            preOrder(n.getDireito());
+        }
+    }
+
+    public void postOrder(No n) {
+        if (n.getEsquerdo() != null){
+            postOrder(n.getEsquerdo());
+        }
+
+        if (n.getDireito() != null){
+          postOrder(n.getDireito());
+        }
+
+        System.out.println(n.getChave());
+    }
+
+    public void inOrder(No n) {
+        if (n.getEsquerdo() != null){
+            inOrder(n.getEsquerdo());
+        }
+
+        System.out.println(n.getChave());
+
+        if (n.getDireito() != null){
+          inOrder(n.getDireito());
+        }
+    }
+
+    public void printArvore(){
+        int altura = height(raiz);
+        int linhas = altura + 1;
+        int colunas = (int) Math.pow(2, linhas) - 1;  //numero total de nós (2^linhas) - 1
+
+        Object[][] matriz = new Object[linhas][colunas];
+        
+        montar(matriz, raiz, 0, colunas /2); //raiz começa no meio da matriz (colunas/2)
+        for (int i = 0; i < linhas; i++){
+            for (int j = 0; j < colunas; j++){
+                if (matriz[i][j] == null){
+                    System.out.print("  ");
+                } else {
+                    System.out.printf("%3s", matriz[i][j]);
+                }
+            }
             System.out.println();
         }
     }
 
-    private void imprimirNivel(No no, int nivelAlvo, int nivelAtual, int espacosEntre) {
-        if (no == null) {
-            System.out.print("  ");
-            for (int i = 0; i < espacosEntre; i++) {
-                System.out.print("  ");
-            }
+    protected void montar(Object[][] matriz, No n, int linha, int coluna){
+        if (n == null){ //não tem nada mais 
             return;
         }
-        
-        if (nivelAtual == nivelAlvo) {
-            System.out.print(String.format("%2d", no.getValor()));
-            for (int i = 0; i < espacosEntre; i++) {
-                System.out.print("  ");
-            }
-        } else {
-            imprimirNivel(no.getFilhoEsquerdo(), nivelAlvo, nivelAtual + 1, espacosEntre);
-            imprimirNivel(no.getFilhoDireito(), nivelAlvo, nivelAtual + 1, espacosEntre);
+
+        matriz[linha][coluna] = n.getChave();
+
+        //serve para mostrar onde cada nó vai ser posicionado na arvore, quanto mais desce mais distante fica
+        int d = (int) Math.pow(2, matriz.length - linha - 2);
+
+        if (n.getEsquerdo() != null) {
+            montar(matriz, n.getEsquerdo(), linha + 1, coluna - d);
         }
+
+        if (n.getDireito() != null) {
+            montar(matriz, n.getDireito(), linha + 1, coluna + d);
+        }
+
     }
 }
