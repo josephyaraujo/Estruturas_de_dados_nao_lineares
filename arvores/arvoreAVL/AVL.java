@@ -15,6 +15,9 @@ public class AVL extends ABP implements ArvoreAVL {
         while (n.getFB() != 0 && n.getPai() != null) { //verifica se o fator de balanceamento do nó é diferente de 0 e se ele não é raiz
             AVLNo atual = n;
             AVLNo pai = (AVLNo) atual.getPai();
+
+            System.out.println("Atualizando FB do pai " + pai.getValor() + " que era " + pai.getFB());
+            System.out.println("Atual é " + atual.getValor() + " com FB " + atual.getFB());
             
             if (atual == pai.getFilhoEsquerdo()) { // Atualiza o fator de balanceamento do pai
                 pai.setFB(pai.getFB() + 1);
@@ -26,6 +29,7 @@ public class AVL extends ABP implements ArvoreAVL {
                 rotacao(pai, atual);
                 break;
             }
+            n = pai; // Move para o próximo nó pai
         }
     }
 
@@ -155,8 +159,8 @@ public class AVL extends ABP implements ArvoreAVL {
     }
 
     @Override
-    public void inserir(Object o) {
-        AVLNo pai = treeSearch(raiz, o);
+    public AVLNo inserir(Object o) {
+        AVLNo pai = (AVLNo) treeSearch(raiz, o);
         // Se o nó retornado for igual ao valor a ser inserido, lança exceção
         if (pai.getValor().equals(o)) {
             throw new RuntimeException("O valor já existe na árvore");
@@ -165,7 +169,9 @@ public class AVL extends ABP implements ArvoreAVL {
 
         if ((int) pai.getValor() > (int) o) { // Se o valor a ser inserido for menor que o do pai, insere à esquerda
             pai.setFilhoEsquerdo(novoNo);
+            System.out.println("Inseriu " + o + " à esquerda de " + pai.getValor() + " com FB " + pai.getFB());
             pai.setFB(pai.getFB() + 1); // Atualiza o fator de balanceamento
+            System.out.println("Inseriu " + o + " à esquerda de " + pai.getValor() + " com FB " + pai.getFB());
             altFBinsercao(pai);
         } else { // Senão, insere à direita
             pai.setFilhoDireito(novoNo);
@@ -173,19 +179,22 @@ public class AVL extends ABP implements ArvoreAVL {
             altFBinsercao(pai);
         }
         tamanho++;
+        return novoNo;
     }
 
     @Override
     public Object remover(Object o) {
         AVLNo no = (AVLNo) treeSearch(raiz, o);
-        Object removido = no.getValor(); 
-        AVLNo noParaBalancear; // Nó pai para iniciar o balanceamento
-        if (no == null) {
+         if (no == null) {
             throw new RuntimeException("O valor não foi encontrado na árvore");
         }
-        else if (no.getFilhoEsquerdo() == null && no.getFilhoDireito() == null) { // Nó folha
+        
+        Object removido = no.getValor(); 
+        AVLNo noParaBalancear; // Nó pai para iniciar o balanceamento
+       
+        if (no.getFilhoEsquerdo() == null && no.getFilhoDireito() == null) { // Nó folha
             noParaBalancear = (AVLNo) no.getPai();
-            if (noParaBalancear() == null) {
+            if (noParaBalancear == null) {
                 raiz = null; // A árvore ficará vazia
             } else {
                 if (no == noParaBalancear.getFilhoEsquerdo()) { //se o nó for filho esquerdo do pai
