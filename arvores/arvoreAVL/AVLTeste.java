@@ -2,7 +2,7 @@ package arvores.arvoreAVL;
 
 public class AVLTeste {
     public static void main(String[] args) {
-        AVL arvore = new AVL(10);
+        AVL2 arvore = new AVL2(10);
         arvore.printArvoreComFB();
         System.out.println("--------------------------");
         System.out.println();

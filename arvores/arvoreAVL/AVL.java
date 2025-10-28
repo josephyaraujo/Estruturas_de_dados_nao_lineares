@@ -188,7 +188,7 @@ public class AVL extends ABP implements ArvoreAVL {
     @Override
     public Object remover(Object o) {
         AVLNo no = (AVLNo) buscar(raiz, o);
-        AVLNo noParaBalancear = null; // Nó pai para iniciar o balanceamento
+        AVLNo noParaBalancear; // Nó pai para iniciar o balanceamento
         if (no == null) {
             throw new RuntimeException("O valor não foi encontrado na árvore");
         }

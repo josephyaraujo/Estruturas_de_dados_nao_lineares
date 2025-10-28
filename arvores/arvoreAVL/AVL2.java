@@ -15,34 +15,35 @@ public class AVL2 extends ABP implements ArvoreAVL {
     }
 
     @Override
-    public void rotacao(AVLNo desbalanceado, AVLNo filho) {
+    public AVLNo rotacao(AVLNo desbalanceado, AVLNo filho) {
         if (desbalanceado == null || filho == null) {
             throw new RuntimeException("O nó desbalanceado e o filho não podem ser nulos para a rotação.");
         }
         if (desbalanceado.getFB() == 2) { // Desbalanceamento à esquerda
             if (filho.getFB() >= 0) { // Rotação simples à direita
-                rotacaoSimplesDireita(desbalanceado, filho);
+                return rotacaoSimplesDireita(desbalanceado, filho);
                 
             } else { //Rotação dupla à direita
                 rotacaoSimplesEsquerda(filho, (AVLNo) filho.getFilhoDireito());
-                rotacaoSimplesDireita(desbalanceado, (AVLNo) desbalanceado.getFilhoEsquerdo());
+                return rotacaoSimplesDireita(desbalanceado, (AVLNo) desbalanceado.getFilhoEsquerdo());
             }
         } else if (desbalanceado.getFB() == -2) { // Desbalanceamento à direita
             if (filho.getFB() <= 0) { // Rotação simples à esquerda
-                rotacaoSimplesEsquerda(desbalanceado, filho);
+                return rotacaoSimplesEsquerda(desbalanceado, filho);
 
             } else { // Rotação dupla à esquerda
                 rotacaoSimplesDireita(filho, (AVLNo) filho.getFilhoEsquerdo());
-                rotacaoSimplesEsquerda(desbalanceado, (AVLNo) desbalanceado.getFilhoDireito());
+                return rotacaoSimplesEsquerda(desbalanceado, (AVLNo) desbalanceado.getFilhoDireito());
             }
         }
+    return null; // Retorna null se não houver desbalanceamento
     }
 
     @Override
     public void altFBinsercao(AVLNo n) {
         AVLNo atual = n;
         while (atual != null) {
-            if (Math.abs(atual.getFB()) == 2) { // Verifica se o nó está desbalanceado
+            if (Math.abs(atual.getFB()) == 2) { // Verifica se o nó está desbalanceado (se e +2 ou -2)
                 // Chama o método de rotação, já definindo o filho envolvido no desbalanceamento 
                 rotacao(atual, (AVLNo) (atual.getFB() > 0 ? atual.getFilhoEsquerdo() : atual.getFilhoDireito()));
                 break;
@@ -68,7 +69,9 @@ public class AVL2 extends ABP implements ArvoreAVL {
         AVLNo atual = n;
         while (atual != null) {
             if (Math.abs(atual.getFB()) == 2) {
-                rotacao(atual, atual.getFB() > 0 ? (AVLNo) atual.getFilhoEsquerdo() : (AVLNo) atual.getFilhoDireito());
+                AVLNo novaRaiz = rotacao(atual, atual.getFB() > 0 ? (AVLNo) atual.getFilhoEsquerdo() : (AVLNo) atual.getFilhoDireito());
+                atual = (novaRaiz != null) ? (AVLNo) novaRaiz.getPai() : (AVLNo) atual.getPai(); // Atualiza o nó atual para a nova raiz após a rotação
+                continue; // Reavalia o nó atual após a rotação
             }
             AVLNo pai = (AVLNo) atual.getPai();
 
@@ -88,7 +91,7 @@ public class AVL2 extends ABP implements ArvoreAVL {
     }
     // Implementação da rotação simples à direita
     @Override
-    public void rotacaoSimplesDireita(AVLNo pai, AVLNo atual) {
+    public AVLNo rotacaoSimplesDireita(AVLNo pai, AVLNo atual) {
         AVLNo avo = (AVLNo) pai.getPai();
         AVLNo netoDireito = (AVLNo) atual.getFilhoDireito();
 
@@ -112,14 +115,18 @@ public class AVL2 extends ABP implements ArvoreAVL {
         atual.setFilhoDireito(pai);
         pai.setPai(atual);
 
-        // Atualiza os fatores de balanceamento
-        int fb_pai = pai.getFB() - 1 - Math.max(atual.getFB(), 0);
-        atual.setFB(atual.getFB() - 1 + Math.min(fb_pai, 0));
-        pai.setFB(fb_pai);
+        // Recalcula fatores localmente a partir das alturas (consistente com formataNosRecursivo)
+        int fbPai = altura((AVLNo) pai.getFilhoEsquerdo()) - altura((AVLNo) pai.getFilhoDireito());
+        int fbAtual = altura((AVLNo) atual.getFilhoEsquerdo()) - altura((AVLNo) atual.getFilhoDireito());
+        pai.setFB(fbPai);
+        atual.setFB(fbAtual);
+
+        return atual; // Retorna o novo nó raiz após a rotação
     }
+
     // Implementação da rotação simples à esquerda
     @Override
-    public void rotacaoSimplesEsquerda(AVLNo pai, AVLNo atual) {
+    public AVLNo rotacaoSimplesEsquerda(AVLNo pai, AVLNo atual) {
         AVLNo avo = (AVLNo) pai.getPai();
         AVLNo netoEsquerdo = (AVLNo) atual.getFilhoEsquerdo();
         
@@ -143,10 +150,13 @@ public class AVL2 extends ABP implements ArvoreAVL {
         atual.setFilhoEsquerdo(pai);
         pai.setPai(atual);
 
-        // Atualiza os fatores de balanceamento
-        int fb_pai = pai.getFB() + 1 - Math.min(atual.getFB(), 0);
-        atual.setFB(atual.getFB() + 1 + Math.max(fb_pai, 0));
-        pai.setFB(fb_pai);
+        // Recalcula fatores localmente a partir das alturas (consistente com formataNosRecursivo)
+        int fbPai = altura((AVLNo) pai.getFilhoEsquerdo()) - altura((AVLNo) pai.getFilhoDireito());
+        int fbAtual = altura((AVLNo) atual.getFilhoEsquerdo()) - altura((AVLNo) atual.getFilhoDireito());
+        pai.setFB(fbPai);
+        atual.setFB(fbAtual);
+
+        return atual; // Retorna o novo nó raiz após a rotação
     }
 
     @Override
@@ -200,7 +210,7 @@ public class AVL2 extends ABP implements ArvoreAVL {
             if (no.getPai() == null) {
                 raiz = filho;
                 filho.setPai(null);
-                noParaBalancear = filho;
+                noParaBalancear = null; //quando a raiz é removida, não há nó pai para balancear
             } else {
                 noParaBalancear = (AVLNo) no.getPai();
 
@@ -296,7 +306,7 @@ public class AVL2 extends ABP implements ArvoreAVL {
         }
 
         // Formata os nós para garantir que os nós estão corretos
-        formataNos();
+        //formataNos();
 
         int altura = altura(raiz);
         List<List<String>> levels = new ArrayList<>();
