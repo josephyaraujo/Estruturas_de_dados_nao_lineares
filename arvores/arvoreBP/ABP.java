@@ -20,8 +20,8 @@ public class ABP {
         if (n == null || isExternal(n)){
             return 0;
         } else {
-            int hEsquerda = this.height(n.getEsquerdo());
-            int hDireito = this.height(n.getDireito());
+            int hEsquerda = this.height(n.getFilhoEsquerdo());
+            int hDireito = this.height(n.getFilhoDireito());
             
             return 1 + Math.max(hEsquerda, hDireito);
         }
@@ -42,12 +42,12 @@ public class ABP {
     public Iterator<No> children(No n){
         ArrayList<No> a = new ArrayList<>();
 
-        if (n.getDireito() != null) {
-            a.add(n.getDireito());
+        if (n.getFilhoDireito() != null) {
+            a.add(n.getFilhoDireito());
         }
 
-        if (n.getEsquerdo() != null) {
-            a.add(n.getEsquerdo());
+        if (n.getFilhoEsquerdo() != null) {
+            a.add(n.getFilhoEsquerdo());
         }
 
         return a.iterator();
@@ -60,7 +60,7 @@ public class ABP {
     }
 
     public void element(No n, ArrayList<Object> e){
-        e.add(n.getChave());
+        e.add(n.getValor());
         Iterator<No> eIterator = children(n);
         while (eIterator.hasNext()) {
             element(eIterator.next(), e);
@@ -87,11 +87,11 @@ public class ABP {
     }
 
     public boolean hasLeft(No n){
-        return n.getEsquerdo() != null;
+        return n.getFilhoEsquerdo() != null;
     }
 
     public boolean hasRight(No n){
-        return n.getDireito() != null;
+        return n.getFilhoDireito() != null;
     }
 
     public boolean isInternal(No n){
@@ -111,58 +111,58 @@ public class ABP {
             return null;
         }
         //Procura no lado esquerdo
-        if ((int) chave < (int) n.getChave()) {
-            if (n.getEsquerdo() == null) {
+        if ((int) chave < (int) n.getValor()) {
+            if (n.getFilhoEsquerdo() == null) {
                 return n;
             }
-            return treeSearch(n.getEsquerdo(), chave);
+            return treeSearch(n.getFilhoEsquerdo(), chave);
         //Caso seja o mesmo valor encontrado
-        } else if ((int) chave == (int) n.getChave()){
+        } else if ((int) chave == (int) n.getValor()){
             return n;
         } else {
         //Procura no lado direito
-            if (n.getDireito() == null) {
+            if (n.getFilhoDireito() == null) {
                 return n;
             }
-            return treeSearch(n.getDireito(), chave);
+            return treeSearch(n.getFilhoDireito(), chave);
         }
     }
 
-    public No addChild(Object chave){
+    public No inserir(Object chave){
         No noPai = treeSearch(raiz, chave);
         No novoNo = new No(noPai, chave);
 
-        if ((int) noPai.getChave() > (int) chave){
-            noPai.setEsquerdo(novoNo);
+        if ((int) noPai.getValor() > (int) chave){
+            noPai.setFilhoEsquerdo(novoNo);
         } else {
-            noPai.setDireito(novoNo);
+            noPai.setFilhoDireito(novoNo);
         }
 
         tamanho++;
         return novoNo;
     }
 
-    public Object remove(Object chave){
+    public Object remover(Object chave){
         No temp = treeSearch(raiz, chave);
 
-        if (temp == null || (int) temp.getChave() != (int) chave){
+        if (temp == null || (int) temp.getValor() != (int) chave){
             throw new RuntimeException("Chave nao existe");
         }
 
-        Object remover = temp.getChave();
+        Object remover = temp.getValor();
 
-        if (temp.getDireito() == null && temp.getEsquerdo() == null) { //não tem filhos
+        if (temp.getFilhoDireito() == null && temp.getFilhoEsquerdo() == null) { //não tem filhos
             No pai = temp.getPai();
             if (pai == null){
                 raiz = null;
-            } else if (pai.getEsquerdo() == temp) {
-                pai.setEsquerdo(null);
+            } else if (pai.getFilhoEsquerdo() == temp) {
+                pai.setFilhoEsquerdo(null);
             } else {
-                pai.setDireito(null);
+                pai.setFilhoDireito(null);
             }
-            
-        } else if ((temp.getDireito() == null && temp.getEsquerdo() != null) || (temp.getDireito() != null && temp.getEsquerdo() == null)) { //tem um filho
-            No filho = (hasLeft(temp)) ? temp.getEsquerdo() : temp.getDireito();
+
+        } else if ((temp.getFilhoDireito() == null && temp.getFilhoEsquerdo() != null) || (temp.getFilhoDireito() != null && temp.getFilhoEsquerdo() == null)) { //tem um filho
+            No filho = (hasLeft(temp)) ? temp.getFilhoEsquerdo() : temp.getFilhoDireito();
 
             No pai = temp.getPai();
 
@@ -170,18 +170,18 @@ public class ABP {
                 raiz = filho;
                 filho.setPai(null);
             } else {
-                if (pai.getEsquerdo() == temp) {
-                    pai.setEsquerdo(filho);
+                if (pai.getFilhoEsquerdo() == temp) {
+                    pai.setFilhoEsquerdo(filho);
                 } else {
-                    pai.setDireito(filho);
+                    pai.setFilhoDireito(filho);
                 }
                 filho.setPai(pai);
             }
         } else { //tem dois filhos
-            No substituto = sucessor(temp.getDireito());
-            Object tempChave = substituto.getChave();
-            remove(substituto.getChave());
-            temp.setChave(tempChave);
+            No substituto = sucessor(temp.getFilhoDireito());
+            Object tempValor = substituto.getValor();
+            remover(substituto.getValor());
+            temp.setValor(tempValor);
         }
 
         tamanho--;
@@ -189,46 +189,46 @@ public class ABP {
     }
 
     public No sucessor(No n){
-        while (n.getEsquerdo() != null){
-            n = n.getEsquerdo();
+        while (n.getFilhoEsquerdo() != null){
+            n = n.getFilhoEsquerdo();
         }
 
         return n;
     }
 
     public void preOrder(No n){
-        System.out.println(n.getChave());
+        System.out.println(n.getValor());
 
-        if (n.getEsquerdo() != null){
-            preOrder(n.getEsquerdo());
+        if (n.getFilhoEsquerdo() != null){
+            preOrder(n.getFilhoEsquerdo());
         }
 
-        if (n.getDireito() != null){
-            preOrder(n.getDireito());
+        if (n.getFilhoDireito() != null){
+            preOrder(n.getFilhoDireito());
         }
     }
 
     public void postOrder(No n) {
-        if (n.getEsquerdo() != null){
-            postOrder(n.getEsquerdo());
+        if (n.getFilhoEsquerdo() != null){
+            postOrder(n.getFilhoEsquerdo());
         }
 
-        if (n.getDireito() != null){
-          postOrder(n.getDireito());
+        if (n.getFilhoDireito() != null){
+          postOrder(n.getFilhoDireito());
         }
 
-        System.out.println(n.getChave());
+        System.out.println(n.getValor());
     }
 
     public void inOrder(No n) {
-        if (n.getEsquerdo() != null){
-            inOrder(n.getEsquerdo());
+        if (n.getFilhoEsquerdo() != null){
+            inOrder(n.getFilhoEsquerdo());
         }
 
-        System.out.println(n.getChave());
+        System.out.println(n.getValor());
 
-        if (n.getDireito() != null){
-          inOrder(n.getDireito());
+        if (n.getFilhoDireito() != null){
+          inOrder(n.getFilhoDireito());
         }
     }
 
@@ -257,17 +257,17 @@ public class ABP {
             return;
         }
 
-        matriz[linha][coluna] = n.getChave();
+        matriz[linha][coluna] = n.getValor();
 
         //serve para mostrar onde cada nó vai ser posicionado na arvore, quanto mais desce mais distante fica
         int d = (int) Math.pow(2, matriz.length - linha - 2);
 
-        if (n.getEsquerdo() != null) {
-            montar(matriz, n.getEsquerdo(), linha + 1, coluna - d);
+        if (n.getFilhoEsquerdo() != null) {
+            montar(matriz, n.getFilhoEsquerdo(), linha + 1, coluna - d);
         }
 
-        if (n.getDireito() != null) {
-            montar(matriz, n.getDireito(), linha + 1, coluna + d);
+        if (n.getFilhoDireito() != null) {
+            montar(matriz, n.getFilhoDireito(), linha + 1, coluna + d);
         }
 
     }

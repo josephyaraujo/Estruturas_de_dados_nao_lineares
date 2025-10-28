@@ -178,7 +178,7 @@ public class AVL extends ABP implements ArvoreAVL {
     @Override
     public Object remover(Object o) {
         AVLNo no = (AVLNo) treeSearch(raiz, o);
-        Object removido = no.getChave(); 
+        Object removido = no.getValor(); 
         AVLNo noParaBalancear; // Nó pai para iniciar o balanceamento
         if (no == null) {
             throw new RuntimeException("O valor não foi encontrado na árvore");
